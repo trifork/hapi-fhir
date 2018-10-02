@@ -33,11 +33,14 @@ import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+import org.hl7.fhir.instance.model.api.IBaseResource;
+
 public class RestfulServerConfiguration {
 
 	private static final Logger ourLog = LoggerFactory.getLogger(RestfulServerConfiguration.class);
 	private Collection<ResourceBinding> resourceBindings;
 	private List<BaseMethodBinding<?>> serverBindings;
+    private Map<String, Class<? extends IBaseResource>> resourceNameToSharedSupertype;
 	private String implementationDescription;
 	private String serverVersion = VersionUtil.getVersion();
 	private String serverName = "HAPI FHIR";
@@ -87,6 +90,15 @@ public class RestfulServerConfiguration {
 		this.serverBindings = theServerBindings;
 		return this;
 	}
+    
+    public Map<String, Class<? extends IBaseResource>> getNameToSharedSupertype() {
+      return resourceNameToSharedSupertype;
+    }
+
+    public RestfulServerConfiguration setNameToSharedSupertype(Map<String, Class<? extends IBaseResource>> rename) {
+      this.resourceNameToSharedSupertype = rename;
+      return this;
+    }
 
 	/**
 	 * Get the implementationDescription
