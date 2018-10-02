@@ -30,6 +30,7 @@ import ca.uhn.fhir.interceptor.api.HookParams;
 import ca.uhn.fhir.interceptor.api.IInterceptorService;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.interceptor.executor.InterceptorService;
+import ca.uhn.fhir.model.api.annotation.ProvidesResources;
 import ca.uhn.fhir.model.primitive.InstantDt;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.annotation.Destroy;
@@ -45,6 +46,7 @@ import ca.uhn.fhir.rest.server.exceptions.*;
 import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.IServerInterceptor;
 import ca.uhn.fhir.rest.server.method.BaseMethodBinding;
+import ca.uhn.fhir.rest.server.method.BaseResourceReturningMethodBinding;
 import ca.uhn.fhir.rest.server.method.ConformanceMethodBinding;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import ca.uhn.fhir.rest.server.tenant.ITenantIdentificationStrategy;
@@ -118,6 +120,7 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 	private IPagingProvider myPagingProvider;
 	private Lock myProviderRegistrationMutex = new ReentrantLock();
 	private Map<String, ResourceBinding> myResourceNameToBinding = new HashMap<>();
+  private Map<String, Class<? extends IBaseResource>> myResourceNameToSharedSupertype = new HashMap<>();
 	private IServerAddressStrategy myServerAddressStrategy = new IncomingRequestAddressStrategy();
 	private ResourceBinding myServerBinding = new ResourceBinding();
 	private ResourceBinding myGlobalBinding = new ResourceBinding();
@@ -192,6 +195,7 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 		RestulfulServerConfiguration result = new RestulfulServerConfiguration();
 		result.setResourceBindings(getResourceBindings());
 		result.setServerBindings(getServerBindings());
+    result.getNameToSharedSupertype(myResourceNameToSharedSupertype);
 		result.setImplementationDescription(getImplementationDescription());
 		result.setServerVersion(getServerVersion());
 		result.setServerName(getServerName());
@@ -923,8 +927,8 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 			preProcessedParams.add(HttpServletRequest.class, theRequest);
 			preProcessedParams.add(HttpServletResponse.class, theResponse);
 			if (!myInterceptorService.callHooks(Pointcut.SERVER_INCOMING_REQUEST_PRE_PROCESSED, preProcessedParams)) {
-				return;
-			}
+					return;
+				}
 
 			String requestPath = getRequestPath(requestFullPath, servletContextPath, servletPath);
 
@@ -974,8 +978,8 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 			postProcessedParams.add(HttpServletRequest.class, theRequest);
 			postProcessedParams.add(HttpServletResponse.class, theResponse);
 			if (!myInterceptorService.callHooks(Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED, postProcessedParams)) {
-				return;
-			}
+					return;
+				}
 
 			/*
 			 * Actually invoke the server method. This call is to a HAPI method binding, which
@@ -994,7 +998,7 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 				myInterceptorService.callHooks(Pointcut.SERVER_PROCESSING_COMPLETED_NORMALLY, hookParams);
 
 				ourLog.trace("Done writing to stream: {}", outputStreamOrWriter);
-			}
+				}
 
 		} catch (NotModifiedException | AuthenticationException e) {
 
@@ -1005,8 +1009,8 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 			handleExceptionParams.add(HttpServletResponse.class, theResponse);
 			handleExceptionParams.add(BaseServerResponseException.class, e);
 			if (!myInterceptorService.callHooks(Pointcut.SERVER_HANDLE_EXCEPTION, handleExceptionParams)) {
-				return;
-			}
+					return;
+				}
 
 			writeExceptionToResponse(theResponse, e);
 
@@ -1047,8 +1051,8 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 			handleExceptionParams.add(HttpServletResponse.class, theResponse);
 			handleExceptionParams.add(BaseServerResponseException.class, exception);
 			if (!myInterceptorService.callHooks(Pointcut.SERVER_HANDLE_EXCEPTION, handleExceptionParams)) {
-				return;
-			}
+					return;
+				}
 
 			/*
 			 * If we're handling an exception, no summary mode should be applied
@@ -1144,6 +1148,8 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 				 * an alternate implementation, but this isn't currently possible..
 				 */
 				findResourceMethods(new PageProvider());
+
+        findSharedSupertypeForResourcePerName();
 
 			} catch (Exception ex) {
 				ourLog.error("An error occurred while loading request handlers!", ex);
@@ -1502,6 +1508,39 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 				}
 			}
 		}
+	}
+  
+  /*
+   * Populates {@link #myResourceNameToSharedSupertype} by scanning all resource
+   * providers. Only resource provider getResourceType values are taken into
+   * account. {@link ProvidesResources} and method return types are deliberately
+   * ignored. 
+   *
+   * Given a resource name, the common superclass for all
+   * getResourceType return values for that name's providers is the common
+   * superclass for all returned/received resources with that name. Since
+   * {@link ProvidesResources} resources and method return types must also be
+   * subclasses of this common supertype, they can't affect the result of this
+   * method.
+   */
+  private void findSharedSupertypeForResourcePerName() {
+    Map<String, CommonResourceSupertypeScanner> resourceNameToScanner = new HashMap<>();
+
+    List<Class<? extends IBaseResource>> providedResourceClasses = getResourceProviders().stream()
+        .map(provider -> provider.getResourceType())
+        .collect(Collectors.toList());
+    providedResourceClasses.stream()
+        .forEach(resourceClass -> {
+          RuntimeResourceDefinition baseDefinition = myFhirContext.getResourceDefinition(resourceClass).getBaseDefinition();
+          CommonResourceSupertypeScanner scanner = resourceNameToScanner.computeIfAbsent(baseDefinition.getName(), key -> new CommonResourceSupertypeScanner());
+          scanner.register(resourceClass);
+        });
+
+    myResourceNameToSharedSupertype = resourceNameToScanner.entrySet().stream()
+        .filter(entry -> entry.getValue().getLowestCommonSuperclass().isPresent())
+        .collect(Collectors.toMap(
+            entry -> entry.getKey(),
+            entry -> entry.getValue().getLowestCommonSuperclass().get()));
 	}
 
 	/*

@@ -27,14 +27,17 @@ import java.util.List;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.server.method.BaseMethodBinding;
 import ca.uhn.fhir.util.VersionUtil;
+import java.util.Map;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 
 public class RestulfulServerConfiguration {
     
     private Collection<ResourceBinding> resourceBindings;
     private List<BaseMethodBinding<?>> serverBindings;
+    private Map<String, Class<? extends IBaseResource>> resourceNameToSharedSupertype;
     private String implementationDescription;
     private String serverVersion = VersionUtil.getVersion();
     private String serverName = "HAPI FHIR";
@@ -80,6 +83,15 @@ public class RestulfulServerConfiguration {
     public RestulfulServerConfiguration setServerBindings(List<BaseMethodBinding<?>> theServerBindings) {
         this.serverBindings = theServerBindings;
         return this;
+    }
+
+    public Map<String, Class<? extends IBaseResource>> getNameToSharedSupertype() {
+      return resourceNameToSharedSupertype;
+    }
+
+    public RestulfulServerConfiguration getNameToSharedSupertype(Map<String, Class<? extends IBaseResource>> rename) {
+      this.resourceNameToSharedSupertype = rename;
+      return this;
     }
 
     /**

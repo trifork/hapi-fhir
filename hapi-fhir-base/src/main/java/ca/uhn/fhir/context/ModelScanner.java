@@ -44,14 +44,15 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 class ModelScanner {
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(ModelScanner.class);
 
-	private Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> myClassToElementDefinitions = new HashMap<Class<? extends IBase>, BaseRuntimeElementDefinition<?>>();
+	private Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> myClassToElementDefinitions = new HashMap<>();
 	private FhirContext myContext;
-	private Map<String, RuntimeResourceDefinition> myIdToResourceDefinition = new HashMap<String, RuntimeResourceDefinition>();
-	private Map<String, BaseRuntimeElementDefinition<?>> myNameToElementDefinitions = new HashMap<String, BaseRuntimeElementDefinition<?>>();
-	private Map<String, RuntimeResourceDefinition> myNameToResourceDefinitions = new HashMap<String, RuntimeResourceDefinition>();
-	private Map<String, Class<? extends IBaseResource>> myNameToResourceType = new HashMap<String, Class<? extends IBaseResource>>();
+	private Map<String, RuntimeResourceDefinition> myIdToResourceDefinition = new HashMap<>();
+	private Map<String, BaseRuntimeElementDefinition<?>> myNameToElementDefinitions = new HashMap<>();
+	private Map<String, RuntimeResourceDefinition> myNameToResourceDefinitions = new HashMap<>();
+	private Map<String, Class<? extends IBaseResource>> myNameToResourceType = new HashMap<>();
+  private Map<String, List<RuntimeResourceDefinition>> myNameToSupertypeResourceDefinitions = new HashMap<>();
 	private RuntimeChildUndeclaredExtensionDefinition myRuntimeChildUndeclaredExtensionDefinition;
-	private Set<Class<? extends IBase>> myScanAlso = new HashSet<Class<? extends IBase>>();
+	private Set<Class<? extends IBase>> myScanAlso = new HashSet<>();
 	private FhirVersionEnum myVersion;
 
 	private Set<Class<? extends IBase>> myVersionTypes;
