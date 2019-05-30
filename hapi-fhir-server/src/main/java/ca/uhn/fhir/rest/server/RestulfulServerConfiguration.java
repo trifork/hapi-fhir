@@ -89,7 +89,7 @@ public class RestulfulServerConfiguration {
       return resourceNameToSharedSupertype;
     }
 
-    public RestulfulServerConfiguration getNameToSharedSupertype(Map<String, Class<? extends IBaseResource>> rename) {
+    public RestulfulServerConfiguration setNameToSharedSupertype(Map<String, Class<? extends IBaseResource>> rename) {
       this.resourceNameToSharedSupertype = rename;
       return this;
     }

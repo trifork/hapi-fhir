@@ -50,7 +50,7 @@ class ModelScanner {
 	private Map<String, BaseRuntimeElementDefinition<?>> myNameToElementDefinitions = new HashMap<>();
 	private Map<String, RuntimeResourceDefinition> myNameToResourceDefinitions = new HashMap<>();
 	private Map<String, Class<? extends IBaseResource>> myNameToResourceType = new HashMap<>();
-  private Map<String, List<RuntimeResourceDefinition>> myNameToSupertypeResourceDefinitions = new HashMap<>();
+    private Map<String, List<RuntimeResourceDefinition>> myNameToSupertypeResourceDefinitions = new HashMap<>();
 	private RuntimeChildUndeclaredExtensionDefinition myRuntimeChildUndeclaredExtensionDefinition;
 	private Set<Class<? extends IBase>> myScanAlso = new HashSet<>();
 	private FhirVersionEnum myVersion;

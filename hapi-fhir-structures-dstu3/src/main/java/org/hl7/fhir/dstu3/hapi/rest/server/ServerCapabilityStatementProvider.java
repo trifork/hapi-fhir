@@ -1,6 +1,5 @@
 package org.hl7.fhir.dstu3.hapi.rest.server;
 
-import ca.uhn.fhir.rest.server.CommonResourceSupertypeScanner;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.context.RuntimeSearchParam;
@@ -38,6 +37,8 @@ import java.util.concurrent.Callable;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+import ca.uhn.fhir.context.FhirContext;
 
 /*
  * #%L
@@ -256,10 +257,11 @@ public class ServerCapabilityStatementProvider implements IServerConformanceProv
         String resourceName = nextEntry.getKey();
         
         RuntimeResourceDefinition def;
+        FhirContext context = getServerConfiguration().getFhirContext();
         if (resourceNameToSharedSupertype.containsKey(resourceName)) {
-          def = getServerConfiguration().getFhirContext().getResourceDefinition(resourceNameToSharedSupertype.get(resourceName));
+          def = context.getResourceDefinition(resourceNameToSharedSupertype.get(resourceName));
         } else {
-          def = getServerConfiguration().getFhirContext().getResourceDefinition(resourceName);
+          def = context.getResourceDefinition(resourceName);
         }
         resource.getTypeElement().setValue(def.getName());
         resource.getProfile().setReference((def.getResourceProfile(serverBase)));

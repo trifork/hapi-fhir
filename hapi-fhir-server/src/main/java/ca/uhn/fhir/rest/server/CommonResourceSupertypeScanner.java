@@ -48,8 +48,8 @@ public class CommonResourceSupertypeScanner {
       }
     } else {
       greatestSharedAncestorsDescending = resourceClassesInHierarchy;
+      initialized = true;
     }
-    initialized = true;
   }
   
   /**

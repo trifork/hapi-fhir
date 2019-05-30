@@ -791,25 +791,25 @@ public class ServerCapabilityStatementProviderDstu3Test {
 		assertThat(opDef.getInstance(), is(false));
 	}
 
-  @Test
-  public void testProfiledResourceStructureDefinitionLinks() throws Exception {
-    RestfulServer rs = new RestfulServer(ourCtx);
-    rs.setResourceProviders(new ProfiledPatientProvider(), new MultipleProfilesPatientProvider());
+    @Test
+    public void testProfiledResourceStructureDefinitionLinks() throws Exception {
+        RestfulServer rs = new RestfulServer(ourCtx);
+        rs.setResourceProviders(new ProfiledPatientProvider(), new MultipleProfilesPatientProvider());
 
-		ServerCapabilityStatementProvider sc = new ServerCapabilityStatementProvider(rs);
-		rs.setServerConformanceProvider(sc);
+        ServerCapabilityStatementProvider sc = new ServerCapabilityStatementProvider(rs);
+        rs.setServerConformanceProvider(sc);
 
-		rs.init(createServletConfig());
+        rs.init(createServletConfig());
 
-		CapabilityStatement conformance = sc.getServerConformance(createHttpServletRequest());
-		ourLog.info(ourCtx.newXmlParser().setPrettyPrint(true).encodeResourceToString(conformance));
-    
-    List<CapabilityStatementRestResourceComponent> resources = conformance.getRestFirstRep().getResource();
-    CapabilityStatementRestResourceComponent patientResource = resources.stream()
-        .filter(resource -> "Patient".equals(resource.getType()))
-        .findFirst().get();
-    assertThat(patientResource.getProfile().getReference(), containsString(PATIENT_SUB));
-  }
+        CapabilityStatement conformance = sc.getServerConformance(createHttpServletRequest());
+        ourLog.info(ourCtx.newXmlParser().setPrettyPrint(true).encodeResourceToString(conformance));
+
+        List<CapabilityStatementRestResourceComponent> resources = conformance.getRestFirstRep().getResource();
+        CapabilityStatementRestResourceComponent patientResource = resources.stream()
+            .filter(resource -> "Patient".equals(resource.getType()))
+            .findFirst().get();
+        assertThat(patientResource.getProfile().getReference(), containsString(PATIENT_SUB));
+    }
 
 	private List<String> toOperationIdParts(List<CapabilityStatementRestOperationComponent> theOperation) {
 		ArrayList<String> retVal = Lists.newArrayList();

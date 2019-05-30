@@ -195,7 +195,7 @@ public class RestfulServer extends HttpServlet implements IRestfulServer<Servlet
 		RestulfulServerConfiguration result = new RestulfulServerConfiguration();
 		result.setResourceBindings(getResourceBindings());
 		result.setServerBindings(getServerBindings());
-    result.getNameToSharedSupertype(myResourceNameToSharedSupertype);
+    result.setNameToSharedSupertype(myResourceNameToSharedSupertype);
 		result.setImplementationDescription(getImplementationDescription());
 		result.setServerVersion(getServerVersion());
 		result.setServerName(getServerName());
