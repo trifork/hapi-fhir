@@ -38,6 +38,8 @@ import java.util.concurrent.Callable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import ca.uhn.fhir.context.FhirContext;
+
 /*
  * #%L
  * HAPI FHIR Structures - DSTU2 (FHIR v1.0.0)
@@ -121,12 +123,12 @@ public class ServerCapabilityStatementProvider implements IServerConformanceProv
   }
 
   private Map<String, List<BaseMethodBinding<?>>> collectMethodBindings() {
-    Map<String, List<BaseMethodBinding<?>>> resourceToMethods = new TreeMap<String, List<BaseMethodBinding<?>>>();
+    Map<String, List<BaseMethodBinding<?>>> resourceToMethods = new TreeMap<>();
     for (ResourceBinding next : getServerConfiguration().getResourceBindings()) {
       String resourceName = next.getResourceName();
       for (BaseMethodBinding<?> nextMethodBinding : next.getMethodBindings()) {
         if (resourceToMethods.containsKey(resourceName) == false) {
-          resourceToMethods.put(resourceName, new ArrayList<BaseMethodBinding<?>>());
+          resourceToMethods.put(resourceName, new ArrayList<>());
         }
         resourceToMethods.get(resourceName).add(nextMethodBinding);
       }
@@ -246,13 +248,21 @@ public class ServerCapabilityStatementProvider implements IServerConformanceProv
     Set<String> operationNames = new HashSet<>();
 
     Map<String, List<BaseMethodBinding<?>>> resourceToMethods = collectMethodBindings();
+    Map<String, Class<? extends IBaseResource>> resourceNameToSharedSupertype = getServerConfiguration().getNameToSharedSupertype();
     for (Entry<String, List<BaseMethodBinding<?>>> nextEntry : resourceToMethods.entrySet()) {
 
       if (nextEntry.getKey().isEmpty() == false) {
         Set<TypeRestfulInteraction> resourceOps = new HashSet<>();
         CapabilityStatementRestResourceComponent resource = rest.addResource();
         String resourceName = nextEntry.getKey();
-        RuntimeResourceDefinition def = getServerConfiguration().getFhirContext().getResourceDefinition(resourceName);
+        
+        RuntimeResourceDefinition def;
+        FhirContext context = getServerConfiguration().getFhirContext();
+        if (resourceNameToSharedSupertype.containsKey(resourceName)) {
+          def = context.getResourceDefinition(resourceNameToSharedSupertype.get(resourceName));
+        } else {
+          def = context.getResourceDefinition(resourceName);
+        }
         resource.getTypeElement().setValue(def.getName());
         resource.getProfile().setReference((def.getResourceProfile(serverBase)));
 

@@ -79,7 +79,7 @@ public class FhirContext {
 	private AddProfileTagEnum myAddProfileTagWhenEncoding = AddProfileTagEnum.ONLY_FOR_CUSTOM;
 	private volatile Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> myClassToElementDefinition = Collections.emptyMap();
 	private ArrayList<Class<? extends IBase>> myCustomTypes;
-	private Map<String, Class<? extends IBaseResource>> myDefaultTypeForProfile = new HashMap<String, Class<? extends IBaseResource>>();
+	private Map<String, Class<? extends IBaseResource>> myDefaultTypeForProfile = new HashMap<>();
 	private volatile Map<String, RuntimeResourceDefinition> myIdToResourceDefinition = Collections.emptyMap();
 	private volatile boolean myInitialized;
 	private volatile boolean myInitializing = false;
@@ -90,7 +90,7 @@ public class FhirContext {
 	private volatile INarrativeGenerator myNarrativeGenerator;
 	private volatile IParserErrorHandler myParserErrorHandler = new LenientErrorHandler();
 	private ParserOptions myParserOptions = new ParserOptions();
-	private Set<PerformanceOptionsEnum> myPerformanceOptions = new HashSet<PerformanceOptionsEnum>();
+	private Set<PerformanceOptionsEnum> myPerformanceOptions = new HashSet<>();
 	private Collection<Class<? extends IBaseResource>> myResourceTypesToScan;
 	private volatile IRestfulClientFactory myRestfulClientFactory;
 	private volatile RuntimeChildUndeclaredExtensionDefinition myRuntimeChildUndeclaredExtensionDefinition;
@@ -755,7 +755,7 @@ public class FhirContext {
 	}
 
 	private synchronized Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> scanResourceTypes(Collection<Class<? extends IElement>> theResourceTypes) {
-		List<Class<? extends IBase>> typesToScan = new ArrayList<Class<? extends IBase>>();
+		List<Class<? extends IBase>> typesToScan = new ArrayList<>();
 		if (theResourceTypes != null) {
 			typesToScan.addAll(theResourceTypes);
 		}
@@ -769,7 +769,7 @@ public class FhirContext {
 			myRuntimeChildUndeclaredExtensionDefinition = scanner.getRuntimeChildUndeclaredExtensionDefinition();
 		}
 
-		Map<String, BaseRuntimeElementDefinition<?>> nameToElementDefinition = new HashMap<String, BaseRuntimeElementDefinition<?>>();
+		Map<String, BaseRuntimeElementDefinition<?>> nameToElementDefinition = new HashMap<>();
 		nameToElementDefinition.putAll(myNameToElementDefinition);
 		for (Entry<String, BaseRuntimeElementDefinition<?>> next : scanner.getNameToElementDefinitions().entrySet()) {
 			if (!nameToElementDefinition.containsKey(next.getKey())) {
@@ -777,7 +777,7 @@ public class FhirContext {
 			}
 		}
 
-		Map<String, RuntimeResourceDefinition> nameToResourceDefinition = new HashMap<String, RuntimeResourceDefinition>();
+		Map<String, RuntimeResourceDefinition> nameToResourceDefinition = new HashMap<>();
 		nameToResourceDefinition.putAll(myNameToResourceDefinition);
 		for (Entry<String, RuntimeResourceDefinition> next : scanner.getNameToResourceDefinition().entrySet()) {
 			if (!nameToResourceDefinition.containsKey(next.getKey())) {
@@ -785,7 +785,7 @@ public class FhirContext {
 			}
 		}
 
-		Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> classToElementDefinition = new HashMap<Class<? extends IBase>, BaseRuntimeElementDefinition<?>>();
+		Map<Class<? extends IBase>, BaseRuntimeElementDefinition<?>> classToElementDefinition = new HashMap<>();
 		classToElementDefinition.putAll(myClassToElementDefinition);
 		classToElementDefinition.putAll(scanner.getClassToElementDefinitions());
 		for (BaseRuntimeElementDefinition<?> next : classToElementDefinition.values()) {
@@ -798,7 +798,7 @@ public class FhirContext {
 			}
 		}
 
-		Map<String, RuntimeResourceDefinition> idToElementDefinition = new HashMap<String, RuntimeResourceDefinition>();
+		Map<String, RuntimeResourceDefinition> idToElementDefinition = new HashMap<>();
 		idToElementDefinition.putAll(myIdToResourceDefinition);
 		idToElementDefinition.putAll(scanner.getIdToResourceDefinition());
 
