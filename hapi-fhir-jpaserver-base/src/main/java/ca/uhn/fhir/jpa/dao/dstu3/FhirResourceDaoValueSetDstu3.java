@@ -32,6 +32,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.util.ElementUtil;
 import org.apache.commons.codec.binary.StringUtils;
 import org.hl7.fhir.convertors.VersionConvertor_30_40;
+import org.hl7.fhir.dstu3.hapi.ctx.DefaultProfileValidationSupport;
 import org.hl7.fhir.dstu3.hapi.ctx.HapiWorkerContext;
 import org.hl7.fhir.dstu3.hapi.ctx.IValidationSupport;
 import org.hl7.fhir.dstu3.model.*;
@@ -64,8 +65,12 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 	private IHapiTerminologySvc myHapiTerminologySvc;
 
 	@Autowired
+	private DefaultProfileValidationSupport myDefaultProfileValidationSupport;
+
+	@Autowired
 	@Qualifier("myJpaValidationSupportChainDstu3")
 	private IValidationSupport myValidationSupport;
+
 	@Autowired
 	private IFhirResourceDaoCodeSystem<CodeSystem, Coding, CodeableConcept> myCodeSystemDao;
 
@@ -73,6 +78,12 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 	public ValueSet expand(IIdType theId, String theFilter, RequestDetails theRequestDetails) {
 		ValueSet source = read(theId, theRequestDetails);
 		return expand(source, theFilter);
+	}
+
+	@Override
+	public ValueSet expand(IIdType theId, String theFilter, int theOffset, int theCount, RequestDetails theRequestDetails) {
+		ValueSet source = read(theId, theRequestDetails);
+		return expand(source, theFilter, theOffset, theCount);
 	}
 
 	private ValueSet doExpand(ValueSet theSource) {
@@ -87,12 +98,12 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 
 		boolean allSystemsAreSuppportedByTerminologyService = true;
 		for (ConceptSetComponent next : theSource.getCompose().getInclude()) {
-			if (!myTerminologySvc.supportsSystem(next.getSystem())) {
+			if (!isBlank(next.getSystem()) && !myTerminologySvc.supportsSystem(next.getSystem())) {
 				allSystemsAreSuppportedByTerminologyService = false;
 			}
 		}
 		for (ConceptSetComponent next : theSource.getCompose().getExclude()) {
-			if (!myTerminologySvc.supportsSystem(next.getSystem())) {
+			if (!isBlank(next.getSystem()) && !myTerminologySvc.supportsSystem(next.getSystem())) {
 				allSystemsAreSuppportedByTerminologyService = false;
 			}
 		}
@@ -105,7 +116,38 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 		ValueSet retVal = outcome.getValueset();
 		retVal.setStatus(PublicationStatus.ACTIVE);
 		return retVal;
+	}
 
+	private ValueSet doExpand(ValueSet theSource, int theOffset, int theCount) {
+
+		validateIncludes("include", theSource.getCompose().getInclude());
+		validateIncludes("exclude", theSource.getCompose().getExclude());
+
+		/*
+		 * If all of the code systems are supported by the HAPI FHIR terminology service, let's
+		 * use that as it's more efficient.
+		 */
+
+		boolean allSystemsAreSuppportedByTerminologyService = true;
+		for (ConceptSetComponent next : theSource.getCompose().getInclude()) {
+			if (!isBlank(next.getSystem()) && !myTerminologySvc.supportsSystem(next.getSystem())) {
+				allSystemsAreSuppportedByTerminologyService = false;
+			}
+		}
+		for (ConceptSetComponent next : theSource.getCompose().getExclude()) {
+			if (!isBlank(next.getSystem()) && !myTerminologySvc.supportsSystem(next.getSystem())) {
+				allSystemsAreSuppportedByTerminologyService = false;
+			}
+		}
+		if (allSystemsAreSuppportedByTerminologyService) {
+			return (ValueSet) myTerminologySvc.expandValueSet(theSource, theOffset, theCount);
+		}
+
+		HapiWorkerContext workerContext = new HapiWorkerContext(getContext(), myValidationSupport);
+		ValueSetExpansionOutcome outcome = workerContext.expand(theSource, null);
+		ValueSet retVal = outcome.getValueset();
+		retVal.setStatus(PublicationStatus.ACTIVE);
+		return retVal;
 	}
 
 	private void validateIncludes(String name, List<ConceptSetComponent> listToValidate) {
@@ -123,6 +165,7 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 		}
 
 		ValueSet source = new ValueSet();
+		source.setUrl(theUri);
 
 		source.getCompose().addInclude().addValueSet(theUri);
 
@@ -148,20 +191,42 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 		// }
 		//
 		// return expand(defaultValueSet, theFilter);
-
 	}
 
 	@Override
-	public ValueSet expand(ValueSet source, String theFilter) {
+	public ValueSet expandByIdentifier(String theUri, String theFilter, int theOffset, int theCount) {
+		if (isBlank(theUri)) {
+			throw new InvalidRequestException("URI must not be blank or missing");
+		}
+
+		ValueSet source = new ValueSet();
+		source.setUrl(theUri);
+
+		source.getCompose().addInclude().addValueSet(theUri);
+
+		if (isNotBlank(theFilter)) {
+			ConceptSetComponent include = source.getCompose().addInclude();
+			ConceptSetFilterComponent filter = include.addFilter();
+			filter.setProperty("display");
+			filter.setOp(FilterOperator.EQUAL);
+			filter.setValue(theFilter);
+		}
+
+		ValueSet retVal = doExpand(source, theOffset, theCount);
+		return retVal;
+	}
+
+	@Override
+	public ValueSet expand(ValueSet theSource, String theFilter) {
 		ValueSet toExpand = new ValueSet();
 
-		// for (UriType next : source.getCompose().getInclude()) {
+		// for (UriType next : theSource.getCompose().getInclude()) {
 		// ConceptSetComponent include = toExpand.getCompose().addInclude();
 		// include.setSystem(next.getValue());
 		// addFilterIfPresent(theFilter, include);
 		// }
 
-		for (ConceptSetComponent next : source.getCompose().getInclude()) {
+		for (ConceptSetComponent next : theSource.getCompose().getInclude()) {
 			toExpand.getCompose().addInclude(next);
 			addFilterIfPresent(theFilter, next);
 		}
@@ -170,7 +235,7 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 			throw new InvalidRequestException("ValueSet does not have any compose.include or compose.import values, can not expand");
 		}
 
-		toExpand.getCompose().getExclude().addAll(source.getCompose().getExclude());
+		toExpand.getCompose().getExclude().addAll(theSource.getCompose().getExclude());
 
 		ValueSet retVal = doExpand(toExpand);
 
@@ -179,7 +244,32 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 		}
 
 		return retVal;
+	}
 
+	@Override
+	public ValueSet expand(ValueSet theSource, String theFilter, int theOffset, int theCount) {
+		ValueSet toExpand = new ValueSet();
+		toExpand.setId(theSource.getId());
+		toExpand.setUrl(theSource.getUrl());
+
+		for (ConceptSetComponent next : theSource.getCompose().getInclude()) {
+			toExpand.getCompose().addInclude(next);
+			addFilterIfPresent(theFilter, next);
+		}
+
+		if (toExpand.getCompose().isEmpty()) {
+			throw new InvalidRequestException("ValueSet does not have any compose.include or compose.import values, can not expand");
+		}
+
+		toExpand.getCompose().getExclude().addAll(theSource.getCompose().getExclude());
+
+		ValueSet retVal = doExpand(toExpand, theOffset, theCount);
+
+		if (isNotBlank(theFilter)) {
+			applyFilter(retVal.getExpansion().getTotalElement(), retVal.getExpansion().getContains(), theFilter);
+		}
+
+		return retVal;
 	}
 
 	private void applyFilter(IntegerType theTotalElement, List<ValueSetExpansionContainsComponent> theContains, String theFilter) {
@@ -225,12 +315,18 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 
 		boolean haveIdentifierParam = theValueSetIdentifier != null && theValueSetIdentifier.isEmpty() == false;
 		ValueSet vs = null;
+		boolean isBuiltInValueSet = false;
 		if (theId != null) {
 			vs = read(theId, theRequestDetails);
 		} else if (haveIdentifierParam) {
-			vs = myValidationSupport.fetchResource(getContext(), ValueSet.class, theValueSetIdentifier.getValue());
+			vs = myDefaultProfileValidationSupport.fetchValueSet(getContext(), theValueSetIdentifier.getValue());
 			if (vs == null) {
-				throw new InvalidRequestException("Unknown ValueSet identifier: " + theValueSetIdentifier.getValue());
+				vs = myValidationSupport.fetchValueSet(getContext(), theValueSetIdentifier.getValue());
+				if (vs == null) {
+					throw new InvalidRequestException("Unknown ValueSet identifier: " + theValueSetIdentifier.getValue());
+				}
+			} else {
+				isBuiltInValueSet = true;
 			}
 		} else {
 			if (theCode == null || theCode.isEmpty()) {
@@ -246,10 +342,14 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 		}
 
 		if (vs != null) {
-			ValueSet expansion = doExpand(vs);
-			List<ValueSetExpansionContainsComponent> contains = expansion.getExpansion().getContains();
-
-			ValidateCodeResult result = validateCodeIsInContains(contains, toStringOrNull(theSystem), toStringOrNull(theCode), theCoding, theCodeableConcept);
+			ValidateCodeResult result;
+			if (myDaoConfig.isPreExpandValueSets() && !isBuiltInValueSet && myTerminologySvc.isValueSetPreExpandedForCodeValidation(vs)) {
+				result = myTerminologySvc.validateCodeIsInPreExpandedValueSet(vs, toStringOrNull(theSystem), toStringOrNull(theCode), toStringOrNull(theDisplay), theCoding, theCodeableConcept);
+			} else {
+				ValueSet expansion = doExpand(vs);
+				List<ValueSetExpansionContainsComponent> contains = expansion.getExpansion().getContains();
+				result = validateCodeIsInContains(contains, toStringOrNull(theSystem), toStringOrNull(theCode), theCoding, theCodeableConcept);
+			}
 			if (result != null) {
 				if (theDisplay != null && isNotBlank(theDisplay.getValue()) && isNotBlank(result.getDisplay())) {
 					if (!theDisplay.getValue().equals(result.getDisplay())) {
@@ -269,7 +369,7 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 	}
 
 	private ca.uhn.fhir.jpa.dao.IFhirResourceDaoValueSet.ValidateCodeResult validateCodeIsInContains(List<ValueSetExpansionContainsComponent> contains, String theSystem, String theCode,
-																																	 Coding theCoding, CodeableConcept theCodeableConcept) {
+			Coding theCoding, CodeableConcept theCodeableConcept) {
 		for (ValueSetExpansionContainsComponent nextCode : contains) {
 			ca.uhn.fhir.jpa.dao.IFhirResourceDaoValueSet.ValidateCodeResult result = validateCodeIsInContains(nextCode.getContains(), theSystem, theCode, theCoding, theCodeableConcept);
 			if (result != null) {
@@ -306,11 +406,11 @@ public class FhirResourceDaoValueSetDstu3 extends FhirResourceDaoDstu3<ValueSet>
 	}
 
 	@Override
-	protected ResourceTable updateEntity(RequestDetails theRequestDetails, IBaseResource theResource, ResourceTable theEntity, Date theDeletedTimestampOrNull, boolean thePerformIndexing,
-													 boolean theUpdateVersion, Date theUpdateTime, boolean theForceUpdate, boolean theCreateNewHistoryEntry) {
+	public ResourceTable updateEntity(RequestDetails theRequestDetails, IBaseResource theResource, ResourceTable theEntity, Date theDeletedTimestampOrNull, boolean thePerformIndexing,
+												 boolean theUpdateVersion, Date theUpdateTime, boolean theForceUpdate, boolean theCreateNewHistoryEntry) {
 		ResourceTable retVal = super.updateEntity(theRequestDetails, theResource, theEntity, theDeletedTimestampOrNull, thePerformIndexing, theUpdateVersion, theUpdateTime, theForceUpdate, theCreateNewHistoryEntry);
 
-		if (myDaoConfig.isPreExpandValueSetsExperimental()) {
+		if (myDaoConfig.isPreExpandValueSets()) {
 			if (retVal.getDeleted() == null) {
 				try {
 					ValueSet valueSet = (ValueSet) theResource;

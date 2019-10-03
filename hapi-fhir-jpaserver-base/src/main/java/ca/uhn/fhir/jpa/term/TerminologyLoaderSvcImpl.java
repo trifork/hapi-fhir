@@ -32,15 +32,19 @@ import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.ConceptMap;
+import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static ca.uhn.fhir.jpa.term.loinc.LoincUploadPropertiesEnum.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /*
@@ -67,26 +71,10 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 	public static final String SCT_FILE_CONCEPT = "Terminology/sct2_Concept_Full_";
 	public static final String SCT_FILE_DESCRIPTION = "Terminology/sct2_Description_Full-en";
 	public static final String SCT_FILE_RELATIONSHIP = "Terminology/sct2_Relationship_Full";
+
 	public static final String IMGTHLA_HLA_NOM_TXT = "hla_nom.txt";
 	public static final String IMGTHLA_HLA_XML = "hla.xml";
-	public static final String LOINC_ANSWERLIST_FILE = "AnswerList.csv";
-	public static final String LOINC_ANSWERLIST_LINK_FILE = "LoincAnswerListLink.csv";
-	public static final String LOINC_DOCUMENT_ONTOLOGY_FILE = "DocumentOntology.csv";
-	public static final String LOINC_UPLOAD_PROPERTIES_FILE = "loincupload.properties";
-	public static final String LOINC_FILE = "LoincTable/Loinc.csv";
-	public static final String LOINC_HIERARCHY_FILE = "MultiAxialHierarchy.csv";
-	public static final String LOINC_PART_FILE = "Part.csv";
-	public static final String LOINC_PART_LINK_FILE = "LoincPartLink.csv";
-	public static final String LOINC_PART_RELATED_CODE_MAPPING_FILE = "PartRelatedCodeMapping.csv";
-	public static final String LOINC_RSNA_PLAYBOOK_FILE = "LoincRsnaRadiologyPlaybook.csv";
-	public static final String LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE = "Top2000CommonLabResultsUs.csv";
-	public static final String LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE = "Top2000CommonLabResultsSi.csv";
-	public static final String LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE = "LoincUniversalLabOrdersValueSet.csv";
-	public static final String LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_CSV = "LoincIeeeMedicalDeviceCodeMappingTable.csv";
-	public static final String LOINC_IMAGING_DOCUMENT_CODES_FILE = "ImagingDocumentCodes.csv";
-	public static final String LOINC_GROUP_FILE = "Group.csv";
-	public static final String LOINC_GROUP_TERMS_FILE = "GroupLoincTerms.csv";
-	public static final String LOINC_PARENT_GROUP_FILE = "ParentGroup.csv";
+
 	public static final String CUSTOM_CONCEPTS_FILE = "concepts.csv";
 	public static final String CUSTOM_HIERARCHY_FILE = "hierarchy.csv";
 	public static final String CUSTOM_CODESYSTEM_JSON = "codesystem.json";
@@ -94,12 +82,10 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 
 	private static final int LOG_INCREMENT = 1000;
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(TerminologyLoaderSvcImpl.class);
-
-	@Autowired
-	private IHapiTerminologySvc myTermSvc;
-
 	// FYI: Hardcoded to R4 because that's what the term svc uses internally
 	private final FhirContext myCtx = FhirContext.forR4();
+	@Autowired
+	private IHapiTerminologySvc myTermSvc;
 
 	private void dropCircularRefs(TermConcept theConcept, ArrayList<String> theChain, Map<String, TermConcept> theCode2concept, Counter theCircularCounter) {
 
@@ -134,69 +120,6 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 
 	}
 
-	private void iterateOverZipFile(LoadedFileDescriptors theDescriptors, String theFileNamePart, IRecordHandler theHandler, char theDelimiter, QuoteMode theQuoteMode, boolean theIsPartialFilename) {
-
-		boolean foundMatch = false;
-		for (FileDescriptor nextZipBytes : theDescriptors.getUncompressedFileDescriptors()) {
-			String nextFilename = nextZipBytes.getFilename();
-			boolean matches;
-			if (theIsPartialFilename) {
-				matches = nextFilename.contains(theFileNamePart);
-			} else {
-				matches = nextFilename.endsWith("/" + theFileNamePart) || nextFilename.equals(theFileNamePart);
-			}
-
-			if (matches) {
-				ourLog.info("Processing file {}", nextFilename);
-				foundMatch = true;
-
-				Reader reader;
-				CSVParser parsed;
-				try {
-					reader = new InputStreamReader(nextZipBytes.getInputStream(), Charsets.UTF_8);
-
-					if (ourLog.isTraceEnabled()) {
-						String contents = IOUtils.toString(reader);
-						ourLog.info("File contents for: {}\n{}", nextFilename, contents);
-						reader = new StringReader(contents);
-					}
-
-					CSVFormat format = CSVFormat.newFormat(theDelimiter).withFirstRecordAsHeader();
-					if (theQuoteMode != null) {
-						format = format.withQuote('"').withQuoteMode(theQuoteMode);
-					}
-					parsed = new CSVParser(reader, format);
-					Iterator<CSVRecord> iter = parsed.iterator();
-					ourLog.debug("Header map: {}", parsed.getHeaderMap());
-
-					int count = 0;
-					int nextLoggedCount = 0;
-					while (iter.hasNext()) {
-						CSVRecord nextRecord = iter.next();
-						if (nextRecord.isConsistent() == false) {
-							continue;
-						}
-						theHandler.accept(nextRecord);
-						count++;
-						if (count >= nextLoggedCount) {
-							ourLog.info(" * Processed {} records in {}", count, nextFilename);
-							nextLoggedCount += LOG_INCREMENT;
-						}
-					}
-
-				} catch (IOException e) {
-					throw new InternalErrorException(e);
-				}
-			}
-
-		}
-
-		if (!foundMatch) {
-			throw new InvalidRequestException("Did not find file matching " + theFileNamePart);
-		}
-
-	}
-
 	@Override
 	public UploadStatistics loadImgthla(List<FileDescriptor> theFiles, RequestDetails theRequestDetails) {
 		LoadedFileDescriptors descriptors = null;
@@ -219,33 +142,59 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 	@Override
 	public UploadStatistics loadLoinc(List<FileDescriptor> theFiles, RequestDetails theRequestDetails) {
 		try (LoadedFileDescriptors descriptors = new LoadedFileDescriptors(theFiles)) {
+			List<String> loincUploadPropertiesFragment = Arrays.asList(
+				LOINC_UPLOAD_PROPERTIES_FILE.getCode()
+			);
+			descriptors.verifyMandatoryFilesExist(loincUploadPropertiesFragment);
+
+			Properties uploadProperties = getProperties(descriptors, LOINC_UPLOAD_PROPERTIES_FILE.getCode());
+
 			List<String> mandatoryFilenameFragments = Arrays.asList(
-				LOINC_FILE,
-				LOINC_HIERARCHY_FILE,
-				LOINC_UPLOAD_PROPERTIES_FILE,
-				LOINC_ANSWERLIST_FILE,
-				LOINC_ANSWERLIST_LINK_FILE,
-				LOINC_PART_FILE,
-				LOINC_PART_LINK_FILE,
-				LOINC_PART_RELATED_CODE_MAPPING_FILE,
-				LOINC_DOCUMENT_ONTOLOGY_FILE,
-				LOINC_RSNA_PLAYBOOK_FILE,
-				LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE,
-				LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE,
-				LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE,
-				LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_CSV,
-				LOINC_IMAGING_DOCUMENT_CODES_FILE
+				uploadProperties.getProperty(LOINC_ANSWERLIST_FILE.getCode(), LOINC_ANSWERLIST_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_ANSWERLIST_LINK_FILE.getCode(), LOINC_ANSWERLIST_LINK_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_DOCUMENT_ONTOLOGY_FILE.getCode(), LOINC_DOCUMENT_ONTOLOGY_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_FILE.getCode(), LOINC_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_HIERARCHY_FILE.getCode(), LOINC_HIERARCHY_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_FILE.getCode(), LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_IMAGING_DOCUMENT_CODES_FILE.getCode(), LOINC_IMAGING_DOCUMENT_CODES_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_PART_FILE.getCode(), LOINC_PART_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_PART_LINK_FILE.getCode(), LOINC_PART_LINK_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_PART_RELATED_CODE_MAPPING_FILE.getCode(), LOINC_PART_RELATED_CODE_MAPPING_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_RSNA_PLAYBOOK_FILE.getCode(), LOINC_RSNA_PLAYBOOK_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE.getCode(), LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE.getCode(), LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE.getCode(), LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE_DEFAULT.getCode())
 			);
 			descriptors.verifyMandatoryFilesExist(mandatoryFilenameFragments);
 
 			List<String> optionalFilenameFragments = Arrays.asList(
+				uploadProperties.getProperty(LOINC_GROUP_FILE.getCode(), LOINC_GROUP_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_GROUP_TERMS_FILE.getCode(), LOINC_GROUP_TERMS_FILE_DEFAULT.getCode()),
+				uploadProperties.getProperty(LOINC_PARENT_GROUP_FILE.getCode(), LOINC_PARENT_GROUP_FILE_DEFAULT.getCode())
 			);
 			descriptors.verifyOptionalFilesExist(optionalFilenameFragments);
 
 			ourLog.info("Beginning LOINC processing");
 
-			return processLoincFiles(descriptors, theRequestDetails);
+			return processLoincFiles(descriptors, theRequestDetails, uploadProperties);
 		}
+	}
+
+	@NotNull
+	private Properties getProperties(LoadedFileDescriptors theDescriptors, String thePropertiesFile) {
+		Properties retVal = new Properties();
+		for (FileDescriptor next : theDescriptors.getUncompressedFileDescriptors()) {
+			if (next.getFilename().endsWith(thePropertiesFile)) {
+				try {
+					try (InputStream inputStream = next.getInputStream()) {
+						retVal.load(inputStream);
+					}
+				} catch (IOException e) {
+					throw new InternalErrorException("Failed to read " + thePropertiesFile, e);
+				}
+			}
+		}
+		return retVal;
 	}
 
 	@Override
@@ -267,7 +216,6 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 	@Override
 	public UploadStatistics loadCustom(String theSystem, List<FileDescriptor> theFiles, RequestDetails theRequestDetails) {
 		try (LoadedFileDescriptors descriptors = new LoadedFileDescriptors(theFiles)) {
-			final Map<String, TermConcept> code2concept = new HashMap<>();
 			IRecordHandler handler;
 
 			Optional<String> codeSystemContent = loadFile(descriptors, CUSTOM_CODESYSTEM_JSON, CUSTOM_CODESYSTEM_XML);
@@ -286,23 +234,7 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 			}
 
 			TermCodeSystemVersion csv = new TermCodeSystemVersion();
-
-			// Concept File
-			handler = new ConceptHandler(code2concept, csv);
-			iterateOverZipFile(descriptors, CUSTOM_CONCEPTS_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
-
-			// Hierarchy
-			if (descriptors.hasFile(CUSTOM_HIERARCHY_FILE)) {
-				handler = new HierarchyHandler(code2concept);
-				iterateOverZipFile(descriptors, CUSTOM_HIERARCHY_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
-			}
-
-			// Add root concepts to CodeSystemVersion
-			for (TermConcept nextConcept : code2concept.values()) {
-				if (nextConcept.getParents().isEmpty()) {
-					csv.getConcepts().add(nextConcept);
-				}
-			}
+			final Map<String, TermConcept> code2concept = processCustomTerminologyFiles(descriptors, csv);
 
 			IIdType target = storeCodeSystem(theRequestDetails, csv, codeSystem, null, null);
 			return new UploadStatistics(code2concept.size(), target);
@@ -370,12 +302,6 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 				try {
 					reader = new InputStreamReader(nextZipBytes.getInputStream(), Charsets.UTF_8);
 
-					if (ourLog.isTraceEnabled()) {
-						String contents = IOUtils.toString(reader);
-						ourLog.info("File contents for: {}\n{}", nextFilename, contents);
-						reader = new StringReader(contents);
-					}
-
 					LineNumberReader lnr = new LineNumberReader(reader);
 					while (lnr.readLine() != null) {
 					}
@@ -400,12 +326,6 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 				Reader reader = null;
 				try {
 					reader = new InputStreamReader(nextZipBytes.getInputStream(), Charsets.UTF_8);
-
-					if (ourLog.isTraceEnabled()) {
-						String contents = IOUtils.toString(reader);
-						ourLog.info("File contents for: {}\n{}", nextFilename, contents);
-						reader = new StringReader(contents);
-					}
 
 					LineNumberReader lnr = new LineNumberReader(reader);
 					while (lnr.readLine() != null) {
@@ -444,7 +364,7 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 //		return new UploadStatistics(conceptCount, target);
 	}
 
-	UploadStatistics processLoincFiles(LoadedFileDescriptors theDescriptors, RequestDetails theRequestDetails) {
+	UploadStatistics processLoincFiles(LoadedFileDescriptors theDescriptors, RequestDetails theRequestDetails, Properties theUploadProperties) {
 		final TermCodeSystemVersion codeSystemVersion = new TermCodeSystemVersion();
 		final Map<String, TermConcept> code2concept = new HashMap<>();
 		final List<ValueSet> valueSets = new ArrayList<>();
@@ -467,94 +387,90 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 			}
 		}
 
-		IRecordHandler handler;
-
-		Properties uploadProperties = new Properties();
-		for (FileDescriptor next : theDescriptors.getUncompressedFileDescriptors()) {
-			if (next.getFilename().endsWith("loincupload.properties")) {
-				try {
-					try (InputStream inputStream = next.getInputStream()) {
-						uploadProperties.load(inputStream);
-					}
-				} catch (IOException e) {
-					throw new InternalErrorException("Failed to read loincupload.properties", e);
-				}
-			}
+		// FIXME: DM 2019-09-13 - Manually add EXTERNAL_COPYRIGHT_NOTICE property until Regenstrief adds this to loinc.xml
+		if (!propertyNamesToTypes.containsKey("EXTERNAL_COPYRIGHT_NOTICE")) {
+			String externalCopyRightNoticeCode = "EXTERNAL_COPYRIGHT_NOTICE";
+			CodeSystem.PropertyType externalCopyRightNoticeType = CodeSystem.PropertyType.STRING;
+			propertyNamesToTypes.put(externalCopyRightNoticeCode, externalCopyRightNoticeType);
 		}
 
-		// Part file
+		IRecordHandler handler;
+
+		// Part
 		handler = new LoincPartHandler(codeSystemVersion, code2concept);
-		iterateOverZipFile(theDescriptors, LOINC_PART_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_PART_FILE.getCode(), LOINC_PART_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 		Map<PartTypeAndPartName, String> partTypeAndPartNameToPartNumber = ((LoincPartHandler) handler).getPartTypeAndPartNameToPartNumber();
 
-		// Loinc Codes
+		// LOINC codes
 		handler = new LoincHandler(codeSystemVersion, code2concept, propertyNamesToTypes, partTypeAndPartNameToPartNumber);
-		iterateOverZipFile(theDescriptors, LOINC_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_FILE.getCode(), LOINC_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Loinc Hierarchy
+		// LOINC hierarchy
 		handler = new LoincHierarchyHandler(codeSystemVersion, code2concept);
-		iterateOverZipFile(theDescriptors, LOINC_HIERARCHY_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_HIERARCHY_FILE.getCode(), LOINC_HIERARCHY_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Answer lists (ValueSets of potential answers/values for loinc "questions")
-		handler = new LoincAnswerListHandler(codeSystemVersion, code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_ANSWERLIST_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Answer lists (ValueSets of potential answers/values for LOINC "questions")
+		handler = new LoincAnswerListHandler(codeSystemVersion, code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_ANSWERLIST_FILE.getCode(), LOINC_ANSWERLIST_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Answer list links (connects loinc observation codes to answerlist codes)
+		// Answer list links (connects LOINC observation codes to answer list codes)
 		handler = new LoincAnswerListLinkHandler(code2concept, valueSets);
-		iterateOverZipFile(theDescriptors, LOINC_ANSWERLIST_LINK_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_ANSWERLIST_LINK_FILE.getCode(), LOINC_ANSWERLIST_LINK_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// RSNA Playbook file
+		// RSNA playbook
 		// Note that this should come before the "Part Related Code Mapping"
 		// file because there are some duplicate mappings between these
 		// two files, and the RSNA Playbook file has more metadata
-		handler = new LoincRsnaPlaybookHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_RSNA_PLAYBOOK_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		handler = new LoincRsnaPlaybookHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_RSNA_PLAYBOOK_FILE.getCode(), LOINC_RSNA_PLAYBOOK_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Part link file
+		// Part link
 		handler = new LoincPartLinkHandler(codeSystemVersion, code2concept);
-		iterateOverZipFile(theDescriptors, LOINC_PART_LINK_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_PART_LINK_FILE.getCode(), LOINC_PART_LINK_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
 		// Part related code mapping
-		handler = new LoincPartRelatedCodeMappingHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_PART_RELATED_CODE_MAPPING_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		handler = new LoincPartRelatedCodeMappingHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_PART_RELATED_CODE_MAPPING_FILE.getCode(), LOINC_PART_RELATED_CODE_MAPPING_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Document Ontology File
-		handler = new LoincDocumentOntologyHandler(code2concept, propertyNamesToTypes, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_DOCUMENT_ONTOLOGY_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Document ontology
+		handler = new LoincDocumentOntologyHandler(code2concept, propertyNamesToTypes, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_DOCUMENT_ONTOLOGY_FILE.getCode(), LOINC_DOCUMENT_ONTOLOGY_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Top 2000 Codes - US
-		handler = new LoincTop2000LabResultsUsHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Top 2000 codes - US
+		handler = new LoincTop2000LabResultsUsHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE.getCode(), LOINC_TOP2000_COMMON_LAB_RESULTS_US_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Top 2000 Codes - SI
-		handler = new LoincTop2000LabResultsSiHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Top 2000 codes - SI
+		handler = new LoincTop2000LabResultsSiHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE.getCode(), LOINC_TOP2000_COMMON_LAB_RESULTS_SI_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Universal Lab Order ValueSet
-		handler = new LoincUniversalOrderSetHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Universal lab order ValueSet
+		handler = new LoincUniversalOrderSetHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE.getCode(), LOINC_UNIVERSAL_LAB_ORDER_VALUESET_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// IEEE Medical Device Codes
-		handler = new LoincIeeeMedicalDeviceCodeHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_CSV, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// IEEE medical device codes
+		handler = new LoincIeeeMedicalDeviceCodeHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_FILE.getCode(), LOINC_IEEE_MEDICAL_DEVICE_CODE_MAPPING_TABLE_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Imaging Document Codes
-		handler = new LoincImagingDocumentCodeHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_IMAGING_DOCUMENT_CODES_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Imaging document codes
+		handler = new LoincImagingDocumentCodeHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_IMAGING_DOCUMENT_CODES_FILE.getCode(), LOINC_IMAGING_DOCUMENT_CODES_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Group File
-		handler = new LoincGroupFileHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_GROUP_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Group
+		handler = new LoincGroupFileHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_GROUP_FILE.getCode(), LOINC_GROUP_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Group Terms File
-		handler = new LoincGroupTermsFileHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_GROUP_TERMS_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Group terms
+		handler = new LoincGroupTermsFileHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_GROUP_TERMS_FILE.getCode(), LOINC_GROUP_TERMS_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
-		// Parent Group File
-		handler = new LoincParentGroupFileHandler(code2concept, valueSets, conceptMaps, uploadProperties);
-		iterateOverZipFile(theDescriptors, LOINC_PARENT_GROUP_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		// Parent group
+		handler = new LoincParentGroupFileHandler(code2concept, valueSets, conceptMaps, theUploadProperties);
+		iterateOverZipFile(theDescriptors, theUploadProperties.getProperty(LOINC_PARENT_GROUP_FILE.getCode(), LOINC_PARENT_GROUP_FILE_DEFAULT.getCode()), handler, ',', QuoteMode.NON_NUMERIC, false);
 
 		IOUtils.closeQuietly(theDescriptors);
+
+		valueSets.add(getValueSetLoincAll());
 
 		for (Entry<String, TermConcept> next : code2concept.entrySet()) {
 			TermConcept nextConcept = next.getValue();
@@ -571,6 +487,23 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 		IIdType target = storeCodeSystem(theRequestDetails, codeSystemVersion, loincCs, valueSets, conceptMaps);
 
 		return new UploadStatistics(conceptCount, target);
+	}
+
+	private ValueSet getValueSetLoincAll() {
+		ValueSet retVal = new ValueSet();
+
+		retVal.setId("loinc-all");
+		retVal.setUrl("http://loinc.org/vs");
+		retVal.setVersion("1.0.0");
+		retVal.setName("All LOINC codes");
+		retVal.setStatus(Enumerations.PublicationStatus.ACTIVE);
+		retVal.setDate(new Date());
+		retVal.setPublisher("Regenstrief Institute, Inc.");
+		retVal.setDescription("A value set that includes all LOINC codes");
+		retVal.setCopyright("This content from LOINC® is copyright © 1995 Regenstrief Institute, Inc. and the LOINC Committee, and available at no cost under the license at https://loinc.org/license/");
+		retVal.getCompose().addInclude().setSystem(IHapiTerminologyLoaderSvc.LOINC_URI);
+
+		return retVal;
 	}
 
 	private UploadStatistics processSnomedCtFiles(LoadedFileDescriptors theDescriptors, RequestDetails theRequestDetails) {
@@ -640,12 +573,12 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 		return retVal;
 	}
 
-	static class LoadedFileDescriptors implements Closeable {
+	public static class LoadedFileDescriptors implements Closeable {
 
 		private List<File> myTemporaryFiles = new ArrayList<>();
 		private List<IHapiTerminologyLoaderSvc.FileDescriptor> myUncompressedFileDescriptors = new ArrayList<>();
 
-		LoadedFileDescriptors(List<IHapiTerminologyLoaderSvc.FileDescriptor> theFileDescriptors) {
+		public LoadedFileDescriptors(List<IHapiTerminologyLoaderSvc.FileDescriptor> theFileDescriptors) {
 			try {
 				for (FileDescriptor next : theFileDescriptors) {
 					if (next.getFilename().toLowerCase().endsWith(".zip")) {
@@ -732,11 +665,97 @@ public class TerminologyLoaderSvcImpl implements IHapiTerminologyLoaderSvc {
 		private void verifyOptionalFilesExist(List<String> theExpectedFilenameFragments) {
 			List<String> notFound = notFound(theExpectedFilenameFragments);
 			if (!notFound.isEmpty()) {
-				ourLog.warn("Could not find the following optional file: " + notFound);
+				ourLog.warn("Could not find the following optional files: " + notFound);
 			}
 		}
 
 
+	}
+
+	@Nonnull
+	public static Map<String, TermConcept> processCustomTerminologyFiles(LoadedFileDescriptors theDescriptors, TermCodeSystemVersion theCsv) {
+		IRecordHandler handler;// Concept File
+		final Map<String, TermConcept> code2concept = new HashMap<>();
+		handler = new ConceptHandler(code2concept, theCsv);
+		iterateOverZipFile(theDescriptors, CUSTOM_CONCEPTS_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+
+		// Hierarchy
+		if (theDescriptors.hasFile(CUSTOM_HIERARCHY_FILE)) {
+			handler = new HierarchyHandler(code2concept);
+			iterateOverZipFile(theDescriptors, CUSTOM_HIERARCHY_FILE, handler, ',', QuoteMode.NON_NUMERIC, false);
+		}
+
+		// Add root concepts to CodeSystemVersion
+		for (TermConcept nextConcept : code2concept.values()) {
+			if (nextConcept.getParents().isEmpty()) {
+				theCsv.getConcepts().add(nextConcept);
+			}
+		}
+		return code2concept;
+	}
+
+	private static void iterateOverZipFile(LoadedFileDescriptors theDescriptors, String theFileNamePart, IRecordHandler theHandler, char theDelimiter, QuoteMode theQuoteMode, boolean theIsPartialFilename) {
+
+		boolean foundMatch = false;
+		for (FileDescriptor nextZipBytes : theDescriptors.getUncompressedFileDescriptors()) {
+			String nextFilename = nextZipBytes.getFilename();
+			boolean matches;
+			if (theIsPartialFilename) {
+				matches = nextFilename.contains(theFileNamePart);
+			} else {
+				matches = nextFilename.endsWith("/" + theFileNamePart) || nextFilename.equals(theFileNamePart);
+			}
+
+			if (matches) {
+				ourLog.info("Processing file {}", nextFilename);
+				foundMatch = true;
+
+				Reader reader;
+				CSVParser parsed;
+				try {
+					reader = new InputStreamReader(nextZipBytes.getInputStream(), Charsets.UTF_8);
+
+					parsed = newCsvRecords(theDelimiter, theQuoteMode, reader);
+					Iterator<CSVRecord> iter = parsed.iterator();
+					ourLog.debug("Header map: {}", parsed.getHeaderMap());
+
+					int count = 0;
+					int nextLoggedCount = 0;
+					while (iter.hasNext()) {
+						CSVRecord nextRecord = iter.next();
+						if (nextRecord.isConsistent() == false) {
+							continue;
+						}
+						theHandler.accept(nextRecord);
+						count++;
+						if (count >= nextLoggedCount) {
+							ourLog.info(" * Processed {} records in {}", count, nextFilename);
+							nextLoggedCount += LOG_INCREMENT;
+						}
+					}
+
+				} catch (IOException e) {
+					throw new InternalErrorException(e);
+				}
+			}
+
+		}
+
+		if (!foundMatch) {
+			throw new InvalidRequestException("Did not find file matching " + theFileNamePart);
+		}
+
+	}
+
+	@Nonnull
+	public static CSVParser newCsvRecords(char theDelimiter, QuoteMode theQuoteMode, Reader theReader) throws IOException {
+		CSVParser parsed;
+		CSVFormat format = CSVFormat.newFormat(theDelimiter).withFirstRecordAsHeader();
+		if (theQuoteMode != null) {
+			format = format.withQuote('"').withQuoteMode(theQuoteMode);
+		}
+		parsed = new CSVParser(theReader, format);
+		return parsed;
 	}
 
 	public static String firstNonBlank(String... theStrings) {
