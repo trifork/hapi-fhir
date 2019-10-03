@@ -29,6 +29,7 @@ import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import org.hl7.fhir.dstu3.model.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -37,6 +38,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class BaseJpaResourceProviderValueSetDstu3 extends JpaResourceProviderDstu3<ValueSet> {
 	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(BaseJpaResourceProviderValueSetDstu3.class);
 
+	@Transactional
+	// Classpath override because PostgreSQL requires a transaction while fetching LOB objects (which is caused by ValueSet expand)
 	@Operation(name = JpaConstants.OPERATION_EXPAND, idempotent = true)
 	public ValueSet expand(
 		HttpServletRequest theServletRequest,

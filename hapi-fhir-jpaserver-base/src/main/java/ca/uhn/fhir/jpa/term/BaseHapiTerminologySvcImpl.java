@@ -99,6 +99,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
+@Transactional
 public abstract class BaseHapiTerminologySvcImpl implements IHapiTerminologySvc, ApplicationContextAware {
 	public static final int DEFAULT_FETCH_SIZE = 250;
 
