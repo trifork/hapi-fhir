@@ -30,10 +30,12 @@ import ca.uhn.fhir.util.CoverageIgnore;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
+@Transactional
 public abstract class TrimmedBaseJpaResourceProvider<T extends IBaseResource> extends BaseJpaProvider implements IResourceProvider {
 
 	private IFhirResourceDao<T> myDao;
