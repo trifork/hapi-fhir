@@ -25,14 +25,14 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>ehealth</id>
-			<name>eHealth snapshot repository</name>
-			<url>https://nexus.trifork.com/content/repositories/snapshots/</url>
+			<id>deploy-user</id>
+			<name>Ehealth snapshot repository</name>
+			<url>https://nexus3.trifork.com/repository/ehealth-maven-snapshots/</url>
 		</snapshotRepository>
 		<repository>
-			<id>ehealth</id>
-			<name>eHealth release repository</name>
-			<url>https://nexus.trifork.com/content/repositories/releases/</url>
+			<id>deploy-user</id>
+			<name>Ehealth release repository</name>
+			<url>https://nexus3.trifork.com/repository/ehealth-maven-releases/</url>
 		</repository>
 		<site>
 			<id>git.server</id>
