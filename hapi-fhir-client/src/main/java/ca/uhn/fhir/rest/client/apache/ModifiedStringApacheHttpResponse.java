@@ -25,9 +25,10 @@ import ca.uhn.fhir.rest.client.impl.BaseHttpResponse;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import ca.uhn.fhir.util.StopWatch;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -75,9 +76,9 @@ public class ModifiedStringApacheHttpResponse extends BaseHttpResponse implement
 
 	@Override
 	public void close() {
-		if (myOrigHttpResponse instanceof CloseableHttpResponse) {
+		if (myOrigHttpResponse instanceof Closeable) {
 			try {
-				((CloseableHttpResponse) myOrigHttpResponse).close();
+				((Closeable) myOrigHttpResponse).close();
 			} catch (IOException exception) {
 				ourLog.debug("Failed to close response", exception);
 			}
@@ -85,7 +86,7 @@ public class ModifiedStringApacheHttpResponse extends BaseHttpResponse implement
 	}
 
 	@Override
-	public Reader createReader() throws IOException {
+	public Reader createReader() {
 		return new InputStreamReader(readEntity(), StandardCharsets.UTF_8);
 	}
 

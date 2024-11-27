@@ -15,12 +15,10 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.system.HapiSystemProperties;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -106,7 +104,7 @@ public class MessageClientDstu2Test {
                 .execute();
 
 			//System.out.println(response);
-			assertEquals("http://192.168.4.93:83/fhirServer/$process-message?async=true&response-url=http%3A%2F%2Fmyserver%2Ffhir&_format=json", capt.getAllValues().get(0).getURI().toASCIIString());
+			assertEquals("http://192.168.4.93:83/fhirServer/$process-message?async=true&response-url=http%3A%2F%2Fmyserver%2Ffhir&_format=json", capt.getAllValues().get(0).getRequestUri().toString());
 			assertEquals("POST", capt.getAllValues().get(0).getRequestLine().getMethod());
 			//assertEquals("<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"resource\"/><resource><Patient xmlns=\"http://hl7.org/fhir\"><name><given value=\"GIVEN\"/></name></Patient></resource></parameter></Parameters>", extractBody(capt, 0));
 			//assertNotNull(response.getOperationOutcome());
@@ -151,7 +149,7 @@ public class MessageClientDstu2Test {
                 .execute();
 
 			//System.out.println(response);
-			assertEquals("http://192.168.4.93:83/fhirServer/$process-message?async=false&_format=json", capt.getAllValues().get(0).getURI().toASCIIString());
+			assertEquals("http://192.168.4.93:83/fhirServer/$process-message?async=false&_format=json", capt.getAllValues().get(0).getRequestUri().toString());
 			assertEquals("POST", capt.getAllValues().get(0).getRequestLine().getMethod());
 			//assertEquals("<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"resource\"/><resource><Patient xmlns=\"http://hl7.org/fhir\"><name><given value=\"GIVEN\"/></name></Patient></resource></parameter></Parameters>", extractBody(capt, 0));
 			//assertNotNull(response.getOperationOutcome());

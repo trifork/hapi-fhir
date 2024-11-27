@@ -8,12 +8,13 @@ import ca.uhn.fhir.rest.client.interceptor.CapturingInterceptor;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import ca.uhn.fhir.util.StopWatch;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.HttpVersion;
+import org.apache.hc.core5.http.io.entity.InputStreamEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -78,8 +79,9 @@ public class CapturingInterceptorTest {
 	@Test
 	public void testResponseBufferApache() throws Exception {
 		StopWatch responseStopWatch = new StopWatch();
-		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
-		response.setEntity(new InputStreamEntity(IOUtils.toInputStream("Some content", Charset.defaultCharset())));
+		ClassicHttpResponse response = new BasicClassicHttpResponse(HttpStatus.SC_OK, "OK");
+		response.setVersion(HttpVersion.HTTP_1_1);
+		response.setEntity(new InputStreamEntity(IOUtils.toInputStream("Some content", Charset.defaultCharset()), ContentType.APPLICATION_OCTET_STREAM));
 		IHttpResponse expectedResponse = spy(new ApacheHttpResponse(response, responseStopWatch));
 
 		CapturingInterceptor interceptor = new CapturingInterceptor();
@@ -128,7 +130,8 @@ public class CapturingInterceptorTest {
 	@Test
 	public void testResponseRepeatable() throws Exception {
 		StopWatch responseStopWatch = new StopWatch();
-		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
+		ClassicHttpResponse response = new BasicClassicHttpResponse(HttpStatus.SC_OK, "OK");
+		response.setVersion(HttpVersion.HTTP_1_1);
 		response.setEntity(new StringEntity("Some content"));
 		IHttpResponse expectedResponse = spy(new ApacheHttpResponse(response, responseStopWatch));
 

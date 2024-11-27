@@ -12,13 +12,11 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.AfterAll;
@@ -69,7 +67,7 @@ public class SortClientTest {
 
 		assertEquals(HttpGet.class, capt.getValue().getClass());
 		HttpGet get = (HttpGet) capt.getValue();
-		assertEquals("http://foo/Patient?name=hello&_sort=given", get.getURI().toString());
+		assertEquals("http://foo/Patient?name=hello&_sort=given", get.getRequestUri().toString());
 	}
 
 	@Test
@@ -85,7 +83,7 @@ public class SortClientTest {
 
 		assertEquals(HttpGet.class, capt.getValue().getClass());
 		HttpGet get = (HttpGet) capt.getValue();
-		assertEquals("http://foo/Patient?name=hello&_sort=-given%2Cfamily", get.getURI().toString());
+		assertEquals("http://foo/Patient?name=hello&_sort=-given%2Cfamily", get.getRequestUri().toString());
 	}
 
 	private String createBundle() {

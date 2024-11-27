@@ -117,7 +117,7 @@ public abstract class AbstractJaxRsProvider implements IRestfulServerDefaults {
 	 * @return the ascii string for the server base
 	 */
 	public String getBaseForServer() {
-		final String url = getUriInfo().getBaseUri().toASCIIString();
+		final String url = getUriInfo().getBaseUri().toString();
 		return StringUtils.isNotBlank(url) && url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
 	}
 

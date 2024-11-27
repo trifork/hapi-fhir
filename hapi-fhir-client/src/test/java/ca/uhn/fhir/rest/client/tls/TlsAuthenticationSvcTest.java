@@ -4,8 +4,8 @@ import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.tls.KeyStoreInfo;
 import ca.uhn.fhir.tls.TlsAuthentication;
 import ca.uhn.fhir.tls.TrustStoreInfo;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

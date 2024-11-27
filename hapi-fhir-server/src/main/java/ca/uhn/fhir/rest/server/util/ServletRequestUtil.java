@@ -24,7 +24,7 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletSubRequestDetails;
 import ca.uhn.fhir.util.UrlUtil;
 import com.google.common.collect.ArrayListMultimap;
-import org.apache.http.NameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -13,11 +13,11 @@ import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Connector;
@@ -57,7 +57,7 @@ public class ReadTest {
 			assertEquals("1", dt.getSystemElement().getValueAsString());
 			assertNull(dt.getValueElement().getValueAsString());
 			
-			org.apache.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
+			org.apache.hc.core5.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
 			assertNotNull(cl);
 			assertEquals("http://localhost:" + ourPort + "/Patient/1/_history/1", cl.getValue());
 			
@@ -78,11 +78,11 @@ public class ReadTest {
 			assertEquals(200, status.getStatusLine().getStatusCode());
 			assertEquals("application/x-foo", status.getEntity().getContentType().getValue());
 			
-			org.apache.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
+			org.apache.hc.core5.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
 			assertNotNull(cl);
 			assertEquals("http://localhost:" + ourPort + "/Binary/1/_history/1", cl.getValue());
 			
-			org.apache.http.Header cd = status.getFirstHeader("content-disposition");
+			org.apache.hc.core5.http.Header cd = status.getFirstHeader("content-disposition");
 			assertNotNull(cd);
 			assertEquals("Attachment;", cd.getValue());
 
@@ -108,7 +108,7 @@ public class ReadTest {
 			assertEquals("1", dt.getSystemElement().getValueAsString());
 			assertEquals("2", dt.getValueElement().getValueAsString());
 
-			org.apache.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
+			org.apache.hc.core5.http.Header cl = status.getFirstHeader(Constants.HEADER_CONTENT_LOCATION_LC);
 			assertNotNull(cl);
 			assertEquals("http://localhost:" + ourPort + "/Patient/1/_history/1", cl.getValue());
 		}

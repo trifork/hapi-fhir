@@ -3,7 +3,7 @@ package ca.uhn.fhir.rest.client.interceptor;
 import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.client.BaseGenericClientR4Test;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.Patient;
@@ -27,7 +27,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.returnBundle(Bundle.class)
 			.execute();
 
-		assertEquals("http://example.com/fhir/TENANT-A/Patient/_history", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com/fhir/TENANT-A/Patient/_history", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -43,7 +43,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.returnBundle(Bundle.class)
 			.execute();
 
-		assertEquals("http://example.com:8000/TENANT-A/Patient/_history", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com:8000/TENANT-A/Patient/_history", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -58,7 +58,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.ofType(CapabilityStatement.class)
 			.execute();
 
-		assertEquals("http://example.com:8000/TENANT-A/metadata", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com:8000/TENANT-A/metadata", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.resource(new Patient().setActive(true))
 			.execute();
 
-		assertEquals("http://example.com/fhir/TENANT-A/Patient", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com/fhir/TENANT-A/Patient", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 
@@ -92,7 +92,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.next(bundle)
 			.execute();
 
-		assertEquals("http://example.com/fhir/TENANT-A/?_getpages=123456", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com/fhir/TENANT-A/?_getpages=123456", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -110,7 +110,7 @@ public class UrlTenantSelectionInterceptorTest extends BaseGenericClientR4Test {
 			.next(bundle)
 			.execute();
 
-		assertEquals("http://example.com/fhir/TENANT-A?_getpages=123456", capt.getAllValues().get(0).getURI().toString());
+		assertEquals("http://example.com/fhir/TENANT-A?_getpages=123456", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 }

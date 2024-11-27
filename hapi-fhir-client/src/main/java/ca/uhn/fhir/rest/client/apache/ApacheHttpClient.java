@@ -19,55 +19,51 @@
  */
 package ca.uhn.fhir.rest.client.apache;
 
-import ca.uhn.fhir.i18n.Msg;
-import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.Header;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
-import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpOptions;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.*;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static org.apache.hc.core5.http.ContentType.APPLICATION_OCTET_STREAM;
+
 /**
  * A Http Client based on Apache. This is an adapter around the class
- * {@link org.apache.http.client.HttpClient HttpClient}
+ * {@link org.apache.hc.client5.http.classic HttpClient}
  *
  * @author Peter Van Houte | peter.vanhoute@agfa.com | Agfa Healthcare
  */
 public class ApacheHttpClient extends BaseHttpClient implements IHttpClient {
 
 	private final HttpClient myClient;
+	private final HttpHost host;
 
 	public ApacheHttpClient(
-			HttpClient theClient,
-			StringBuilder theUrl,
-			Map<String, List<String>> theIfNoneExistParams,
-			String theIfNoneExistString,
-			RequestTypeEnum theRequestType,
-			List<Header> theHeaders) {
+		HttpClient theClient,
+		StringBuilder theUrl,
+		Map<String, List<String>> theIfNoneExistParams,
+		String theIfNoneExistString,
+		RequestTypeEnum theRequestType,
+		List<Header> theHeaders) {
 		super(theUrl, theIfNoneExistParams, theIfNoneExistString, theRequestType, theHeaders);
 		this.myClient = theClient;
+		this.host = new HttpHost(theUrl.toString());
 	}
 
-	private HttpRequestBase constructRequestBase(HttpEntity theEntity) {
+	private HttpUriRequestBase constructRequestBase(HttpEntity theEntity) {
 		String url = myUrl.toString();
 		switch (myRequestType) {
 			case DELETE:
@@ -93,11 +89,7 @@ public class ApacheHttpClient extends BaseHttpClient implements IHttpClient {
 	}
 
 	private UrlEncodedFormEntity createFormEntity(List<NameValuePair> parameters) {
-		try {
-			return new UrlEncodedFormEntity(parameters, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new InternalErrorException(Msg.code(1479) + "Server does not support UTF-8 (should not happen)", e);
-		}
+		return new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8);
 	}
 
 	@Override
@@ -112,12 +104,12 @@ public class ApacheHttpClient extends BaseHttpClient implements IHttpClient {
 		 * ByteArrayEntity, as Android's version of HTTPClient doesn't support
 		 * the newer ones for whatever reason.
 		 */
-		ByteArrayEntity entity = new ByteArrayEntity(content);
+		ByteArrayEntity entity = new ByteArrayEntity(content, APPLICATION_OCTET_STREAM);
 		return createHttpRequest(entity);
 	}
 
 	private ApacheHttpRequest createHttpRequest(HttpEntity theEntity) {
-		HttpRequestBase request = constructRequestBase(theEntity);
+		HttpUriRequest request = constructRequestBase(theEntity);
 		return new ApacheHttpRequest(myClient, request);
 	}
 
@@ -143,7 +135,7 @@ public class ApacheHttpClient extends BaseHttpClient implements IHttpClient {
 		 * Since we add the content type header manually, it makes no difference
 		 * which one we use anyhow.
 		 */
-		ByteArrayEntity entity = new ByteArrayEntity(theContents.getBytes(Constants.CHARSET_UTF8));
+		ByteArrayEntity entity = new ByteArrayEntity(theContents.getBytes(StandardCharsets.UTF_8), APPLICATION_OCTET_STREAM);
 		return createHttpRequest(entity);
 	}
 }

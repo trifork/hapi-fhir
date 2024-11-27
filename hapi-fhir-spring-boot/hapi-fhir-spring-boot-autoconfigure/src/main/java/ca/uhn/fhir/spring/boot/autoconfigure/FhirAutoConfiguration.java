@@ -48,7 +48,7 @@ import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.servlet.ServletException;
 import okhttp3.OkHttpClient;
-import org.apache.http.client.HttpClient;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;

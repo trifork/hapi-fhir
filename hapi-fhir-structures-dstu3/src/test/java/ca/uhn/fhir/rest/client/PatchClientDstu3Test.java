@@ -15,14 +15,12 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.core5.http.client.ClientProtocolException;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpEntityEnclosingRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -76,7 +74,7 @@ public class PatchClientDstu3Test {
 		MethodOutcome outcome = client.patch(new IdType("Patient/123"), "{}", PatchTypeEnum.JSON_PATCH);
 
 		assertEquals("PATCH", capt.getAllValues().get(0).getMethod());
-		assertEquals("http://example.com/fhir/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(0).getFirstHeader("content-type").getValue().replaceAll(";.*", ""));
 		assertEquals("{}", extractBodyAsString(capt));
 		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">OK</div>", ((OperationOutcome) outcome.getOperationOutcome()).getText().getDivAsString());
@@ -97,7 +95,7 @@ public class PatchClientDstu3Test {
 //				patch(new IdType("Patient/123"), "{}", PatchTypeEnum.JSON_PATCH);
 
 //		assertEquals("PATCH", capt.getAllValues().get(0).getMethod());
-//		assertEquals("http://example.com/fhir/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+//		assertEquals("http://example.com/fhir/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 //		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(0).getFirstHeader("content-type").getValue().replaceAll(";.*", ""));
 //		assertEquals("{}", extractBodyAsString(capt));
 //		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">OK</div>", ((OperationOutcome) outcome.getOperationOutcome()).getText().getDivAsString());

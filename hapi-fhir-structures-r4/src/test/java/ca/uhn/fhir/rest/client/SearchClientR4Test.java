@@ -16,13 +16,11 @@ import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.util.TestUtil;
 import ca.uhn.fhir.util.UrlUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CapabilityStatement;
@@ -122,7 +120,7 @@ public class SearchClientR4Test {
 		assertThat(ext).hasSize(1);
 
     HttpGet value = (HttpGet) capt.getValue();
-		assertEquals("http://localhost:8081/hapi-fhir/fhir/Location?_query=match&name=smith&_count=100", value.getURI().toString());
+		assertEquals("http://localhost:8081/hapi-fhir/fhir/Location?_query=match&name=smith&_count=100", value.getRequestUri().toString());
   }
 
   @Test
@@ -174,7 +172,7 @@ public class SearchClientR4Test {
 		assertEquals("Sample Clinic", matches.get(0).getName());
 
     HttpGet value = (HttpGet) capt.getValue();
-		assertEquals("http://localhost:8081/hapi-fhir/fhir/Location?_query=match&name=smith&_count=100", value.getURI().toString());
+		assertEquals("http://localhost:8081/hapi-fhir/fhir/Location?_query=match&name=smith&_count=100", value.getRequestUri().toString());
   }
 
   @Test
@@ -205,10 +203,10 @@ public class SearchClientR4Test {
       int idx = 0;
 
       client.search("STRING1", new StringType("STRING2"), date, cal);
-			assertEquals("http://localhost/fhir/Bundle?stringParam=STRING1&stringTypeParam=STRING2&dateParam=1970-10-04T10:23:55.986-04:00&calParam=1970-10-04T10:23:55.986-04:00", UrlUtil.unescape(((HttpGet) capt.getAllValues().get(idx++)).getURI().toString()));
+			assertEquals("http://localhost/fhir/Bundle?stringParam=STRING1&stringTypeParam=STRING2&dateParam=1970-10-04T10:23:55.986-04:00&calParam=1970-10-04T10:23:55.986-04:00", UrlUtil.unescape(((HttpGet) capt.getAllValues().get(idx++)).getRequestUri().toString()));
 
       client.search(null, null, null, null);
-			assertEquals("http://localhost/fhir/Bundle", UrlUtil.unescape(((HttpGet) capt.getAllValues().get(idx++)).getURI().toString()));
+			assertEquals("http://localhost/fhir/Bundle", UrlUtil.unescape(((HttpGet) capt.getAllValues().get(idx++)).getRequestUri().toString()));
     } finally {
       TimeZone.setDefault(tz);
     }
@@ -237,10 +235,10 @@ public class SearchClientR4Test {
     int idx = 0;
 
     client.search(new SortSpec("param1", SortOrderEnum.ASC));
-		assertEquals("http://localhost/fhir/Bundle?_sort=param1", ((HttpGet) capt.getAllValues().get(idx++)).getURI().toString());
+		assertEquals("http://localhost/fhir/Bundle?_sort=param1", ((HttpGet) capt.getAllValues().get(idx++)).getRequestUri().toString());
 
     client.search(new SortSpec("param1", SortOrderEnum.ASC).setChain(new SortSpec("param2", SortOrderEnum.DESC)));
-		assertEquals("http://localhost/fhir/Bundle?_sort=param1%2C-param2", ((HttpGet) capt.getAllValues().get(idx++)).getURI().toString());
+		assertEquals("http://localhost/fhir/Bundle?_sort=param1%2C-param2", ((HttpGet) capt.getAllValues().get(idx++)).getRequestUri().toString());
   }
 
   @AfterAll

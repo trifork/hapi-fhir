@@ -107,7 +107,7 @@ public class UriDt extends BasePrimitive<String> {
 			return theValue;
 		}
 
-		return retVal.toASCIIString();
+		return retVal.toString();
 	}
 
 	@Override

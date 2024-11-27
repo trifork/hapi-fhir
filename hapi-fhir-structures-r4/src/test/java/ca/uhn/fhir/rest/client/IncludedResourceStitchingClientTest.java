@@ -8,13 +8,11 @@ import ca.uhn.fhir.rest.server.IncludeTest;
 import ca.uhn.fhir.rest.server.IncludeTest.ExtPatient;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Organization;
@@ -72,7 +70,7 @@ public class IncludedResourceStitchingClientTest {
 
 		assertEquals(HttpGet.class, capt.getValue().getClass());
 		HttpGet get = (HttpGet) capt.getValue();
-		assertEquals("http://foo/Patient", get.getURI().toString());
+		assertEquals("http://foo/Patient", get.getRequestUri().toString());
 
 		assertThat(bundle.getEntry()).hasSize(3);
 		
@@ -100,7 +98,7 @@ public class IncludedResourceStitchingClientTest {
 
 		assertEquals(HttpGet.class, capt.getValue().getClass());
 		HttpGet get = (HttpGet) capt.getValue();
-		assertEquals("http://foo/Patient", get.getURI().toString());
+		assertEquals("http://foo/Patient", get.getRequestUri().toString());
 
 		assertThat(bundle.getEntry()).hasSize(4);
 		

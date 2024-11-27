@@ -71,6 +71,18 @@
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 
+		<!-- Apache HTTP Client 5 -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>commons-logging</artifactId>
+					<groupId>commons-logging</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 		<!-- JENA Dependencies - Used for Turtle encoding -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>
@@ -222,6 +234,14 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>16</source>
+					<target>16</target>
+				</configuration>
 			</plugin>
 
 		</plugins>

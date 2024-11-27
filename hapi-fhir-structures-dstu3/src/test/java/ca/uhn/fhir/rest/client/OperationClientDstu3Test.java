@@ -17,14 +17,12 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.dstu3.model.Parameters;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.jupiter.api.AfterAll;
@@ -108,7 +106,7 @@ public class OperationClientDstu3Test {
 		IOUtils.closeQuietly(value.getEntity().getContent());
 		ourLog.info(requestBody);
 		Parameters request = ourCtx.newJsonParser().parseResource(Parameters.class, requestBody);
-		assertEquals("http://foo/$nonrepeating", value.getURI().toASCIIString());
+		assertEquals("http://foo/$nonrepeating", value.getRequestUri().toString());
 		assertThat(request.getParameter()).hasSize(2);
 		assertEquals("valstr", request.getParameter().get(0).getName());
 		assertEquals("str", ((StringType) request.getParameter().get(0).getValue()).getValue());
@@ -130,7 +128,7 @@ public class OperationClientDstu3Test {
 		assertEquals("FOO", response.getParameter().get(0).getName());
 		
 		HttpGet value = (HttpGet) capt.getAllValues().get(0);
-		assertEquals("http://foo/$nonrepeating?valstr=str&valtok=sys2%7Cval2", value.getURI().toASCIIString());
+		assertEquals("http://foo/$nonrepeating?valstr=str&valtok=sys2%7Cval2", value.getRequestUri().toString());
 	}
 
 	@Test
@@ -143,7 +141,7 @@ public class OperationClientDstu3Test {
 		IOUtils.closeQuietly(value.getEntity().getContent());
 		ourLog.info(requestBody);
 		Parameters request = ourCtx.newJsonParser().parseResource(Parameters.class, requestBody);
-		assertEquals("http://foo/$nonrepeating", value.getURI().toASCIIString());
+		assertEquals("http://foo/$nonrepeating", value.getRequestUri().toString());
 		assertThat(request.getParameter()).hasSize(2);
 		assertEquals("valstr", request.getParameter().get(0).getName());
 		assertEquals("str", ((StringType) request.getParameter().get(0).getValue()).getValue());

@@ -25,13 +25,13 @@ import ca.uhn.fhir.rest.client.api.IHttpResponse;
 import ca.uhn.fhir.util.StopWatch;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.URI;
@@ -44,16 +44,16 @@ import java.util.Map;
 
 /**
  * A Http Request based on Apache. This is an adapter around the class
- * {@link org.apache.http.client.methods.HttpRequestBase HttpRequestBase}
+ * {@link HttpUriRequest HttpRequestBase }
  *
  * @author Peter Van Houte | peter.vanhoute@agfa.com | Agfa Healthcare
  */
 public class ApacheHttpRequest extends BaseHttpRequest implements IHttpRequest {
 
 	private HttpClient myClient;
-	private HttpRequestBase myRequest;
+	private HttpUriRequest myRequest;
 
-	public ApacheHttpRequest(HttpClient theClient, HttpRequestBase theApacheRequest) {
+	public ApacheHttpRequest(HttpClient theClient, HttpUriRequest theApacheRequest) {
 		this.myClient = theClient;
 		this.myRequest = theApacheRequest;
 	}
@@ -66,14 +66,13 @@ public class ApacheHttpRequest extends BaseHttpRequest implements IHttpRequest {
 	@Override
 	public IHttpResponse execute() throws IOException {
 		StopWatch responseStopWatch = new StopWatch();
-		HttpResponse httpResponse = myClient.execute(myRequest);
-		return new ApacheHttpResponse(httpResponse, responseStopWatch);
+		return myClient.execute(myRequest, httpResponse -> new ApacheHttpResponse(httpResponse, responseStopWatch));
 	}
 
 	@Override
 	public Map<String, List<String>> getAllHeaders() {
 		Map<String, List<String>> result = new HashMap<>();
-		for (Header header : myRequest.getAllHeaders()) {
+		for (Header header : myRequest.getHeaders()) {
 			if (!result.containsKey(header.getName())) {
 				result.put(header.getName(), new LinkedList<>());
 			}
@@ -87,7 +86,7 @@ public class ApacheHttpRequest extends BaseHttpRequest implements IHttpRequest {
 	 *
 	 * @return the ApacheRequest
 	 */
-	public HttpRequestBase getApacheRequest() {
+	public HttpUriRequest getApacheRequest() {
 		return myRequest;
 	}
 
@@ -104,13 +103,13 @@ public class ApacheHttpRequest extends BaseHttpRequest implements IHttpRequest {
 
 	@Override
 	public String getRequestBodyFromStream() throws IOException {
-		if (myRequest instanceof HttpEntityEnclosingRequest) {
-			HttpEntity entity = ((HttpEntityEnclosingRequest) myRequest).getEntity();
+		if (myRequest != null) {
+			HttpEntity entity = myRequest.getEntity();
 			if (entity.isRepeatable()) {
 				final Header contentTypeHeader = myRequest.getFirstHeader("Content-Type");
 				Charset charset = contentTypeHeader == null
-						? null
-						: ContentType.parse(contentTypeHeader.getValue()).getCharset();
+					? null
+					: ContentType.parse(contentTypeHeader.getValue()).getCharset();
 				return IOUtils.toString(entity.getContent(), charset);
 			}
 		}
@@ -119,12 +118,12 @@ public class ApacheHttpRequest extends BaseHttpRequest implements IHttpRequest {
 
 	@Override
 	public String getUri() {
-		return myRequest.getURI().toString();
+		return myRequest.getRequestUri().toString();
 	}
 
 	@Override
 	public void setUri(String theUrl) {
-		myRequest.setURI(URI.create(theUrl));
+		myRequest.setUri(URI.create(theUrl));
 	}
 
 	@Override

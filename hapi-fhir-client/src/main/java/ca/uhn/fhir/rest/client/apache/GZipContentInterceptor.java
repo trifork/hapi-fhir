@@ -23,14 +23,17 @@ import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
-import org.apache.http.Header;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ByteArrayEntity;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntityContainer;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
+
+import static org.apache.hc.core5.http.ContentType.APPLICATION_OCTET_STREAM;
 
 /**
  * Client interceptor which GZip compresses outgoing (POST/PUT) contents being uploaded
@@ -42,17 +45,16 @@ public class GZipContentInterceptor implements IClientInterceptor {
 
 	@Override
 	public void interceptRequest(IHttpRequest theRequestInterface) {
-		HttpRequestBase theRequest = ((ApacheHttpRequest) theRequestInterface).getApacheRequest();
-		if (theRequest instanceof HttpEntityEnclosingRequest) {
+		HttpUriRequest theRequest = ((ApacheHttpRequest) theRequestInterface).getApacheRequest();
+		if (theRequest != null) {
 			Header[] encodingHeaders = theRequest.getHeaders(Constants.HEADER_CONTENT_ENCODING);
 			if (encodingHeaders == null || encodingHeaders.length == 0) {
-				HttpEntityEnclosingRequest req = (HttpEntityEnclosingRequest) theRequest;
 
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				GZIPOutputStream gos;
 				try {
 					gos = new GZIPOutputStream(bos);
-					req.getEntity().writeTo(gos);
+					theRequest.getEntity().writeTo(gos);
 					gos.finish();
 				} catch (IOException e) {
 					ourLog.warn("Failed to GZip outgoing content", e);
@@ -60,9 +62,9 @@ public class GZipContentInterceptor implements IClientInterceptor {
 				}
 
 				byte[] byteArray = bos.toByteArray();
-				ByteArrayEntity newEntity = new ByteArrayEntity(byteArray);
-				req.setEntity(newEntity);
-				req.addHeader(Constants.HEADER_CONTENT_ENCODING, "gzip");
+				ByteArrayEntity newEntity = new ByteArrayEntity(byteArray, ContentType.APPLICATION_OCTET_STREAM);
+				theRequest.setEntity(newEntity);
+				theRequest.addHeader(Constants.HEADER_CONTENT_ENCODING, "gzip");
 			}
 		}
 	}

@@ -26,7 +26,7 @@ You will also need to manually exclude the Woodstox StAX library from inclusion,
 ```groovy
 configurations {
     all*.exclude group: 'org.codehaus.woodstox'
-    all*.exclude group: 'org.apache.httpcomponents'
+    all*.exclude group: 'org.apache.hc.core5.httpcomponents'
 }
 ```
 

@@ -16,8 +16,8 @@ import ca.uhn.fhir.util.TestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.Validate;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -50,7 +50,7 @@ public class ClientIntegrationTest {
 		HttpClientBuilder builder = HttpClientBuilder.create();
 		// PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(5000, TimeUnit.MILLISECONDS);
 		// builder.setConnectionManager(connectionManager);
-		builder.addInterceptorFirst(new HttpBasicAuthInterceptor("foobar", "boobear"));
+		builder.addRequestInterceptorFirst(new HttpBasicAuthInterceptor("foobar", "boobear"));
 
 		CloseableHttpClient httpClient = builder.build();
 

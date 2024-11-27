@@ -31,9 +31,9 @@ import com.google.common.net.PercentEscaper;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URLEncodedUtils;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
 import java.io.UnsupportedEncodingException;
@@ -573,7 +573,7 @@ public class UrlUtil {
 	}
 
 	public static List<NameValuePair> translateMatchUrl(String theMatchUrl) {
-		List<NameValuePair> parameters;
+ 		List<NameValuePair> parameters;
 		String matchUrl = theMatchUrl;
 		int questionMarkIndex = matchUrl.indexOf('?');
 		if (questionMarkIndex != -1) {

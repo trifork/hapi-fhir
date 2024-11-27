@@ -20,12 +20,15 @@
 package ca.uhn.fhir.test.utilities;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.TimeValue;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -54,20 +57,26 @@ public class HttpClientExtension implements BeforeEachCallback, AfterEachCallbac
 
 	@Override
 	public void beforeEach(ExtensionContext theExtensionContext) throws Exception {
-		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(5000, TimeUnit.MILLISECONDS);
-		connectionManager.setMaxTotal(99);
-		connectionManager.setDefaultMaxPerRoute(99);
-
 		SocketConfig socketConfig = SocketConfig
-			.copy(SocketConfig.DEFAULT)
-			.setSoTimeout((int) (30 * DateUtils.MILLIS_PER_SECOND))
+			.custom()
+			.setSoTimeout((int) (30 * DateUtils.MILLIS_PER_SECOND), TimeUnit.MILLISECONDS)
 			.build();
-		connectionManager.setDefaultSocketConfig(socketConfig);
 
-		HttpClientBuilder builder = HttpClientBuilder
-			.create()
-			.setConnectionManager(connectionManager)
-			.setMaxConnPerRoute(99);
+		ConnectionConfig connectionConfig = ConnectionConfig
+			.custom()
+			.setTimeToLive(TimeValue.ofMilliseconds(5000))
+			.build();
+
+		var connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+			.setMaxConnTotal(99)
+			.setMaxConnPerRoute(99)
+			.setDefaultSocketConfig(socketConfig)
+			.setDefaultConnectionConfig(connectionConfig)
+			.build();
+
+		HttpClientBuilder builder = HttpClients
+			.custom()
+			.setConnectionManager(connectionManager);
 
 		if (myDontFollowRedirects) {
 			builder.disableRedirectHandling();

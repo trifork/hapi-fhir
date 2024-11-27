@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 
 import java.io.IOException;
@@ -53,7 +54,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.http.HttpHeaders.CONTENT_ENCODING;
 
 @Interceptor
 public class ExceptionHandlingInterceptor {
@@ -148,7 +148,7 @@ public class ExceptionHandlingInterceptor {
 
 			servletResponse.reset();
 			oldHeaders.entrySet().stream()
-					.filter(entry -> !entry.getKey().equals(CONTENT_ENCODING))
+					.filter(entry -> !entry.getKey().equals(HttpHeaders.CONTENT_ENCODING))
 					.forEach(entry -> {
 						entry.getValue().stream().forEach(value -> {
 							servletResponse.addHeader(entry.getKey(), value);

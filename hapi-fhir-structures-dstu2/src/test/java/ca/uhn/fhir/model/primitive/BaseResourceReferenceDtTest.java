@@ -11,13 +11,11 @@ import ca.uhn.fhir.rest.client.api.IRestfulClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,7 +105,7 @@ public class BaseResourceReferenceDtTest {
 		ref.setReference("http://domain2.example.com/base/Patient/123");
 		Patient response = (Patient) ref.loadResource(client);
 
-		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 		assertEquals("FAM", response.getName().get(0).getFamily().get(0).getValue());
 		assertEquals("http://domain2.example.com/base/Patient/123", response.getId().getValue());
 	}
@@ -176,7 +174,7 @@ public class BaseResourceReferenceDtTest {
 		Patient response = (Patient) ref.loadResource(client);
 
 		assertEquals("FAM", response.getName().get(0).getFamily().get(0).getValue());
-		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -189,7 +187,7 @@ public class BaseResourceReferenceDtTest {
 		ref.setReference("http://domain2.example.com/base/Patient/123");
 		Patient response = (Patient) ref.loadResource(client);
 
-		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 		assertEquals("FAM", response.getName().get(0).getFamily().get(0).getValue());
 	}
 
@@ -203,7 +201,7 @@ public class BaseResourceReferenceDtTest {
 		ref.setReference("http://domain2.example.com/base/Patient/123");
 		Patient response = (Patient) ref.loadResource(client);
 
-		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://domain2.example.com/base/Patient/123", capt.getAllValues().get(0).getRequestUri().toString());
 		assertEquals("FAM", response.getName().get(0).getFamily().get(0).getValue());
 	}
 

@@ -21,8 +21,8 @@ package ca.uhn.fhir.rest.client.apache;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.Constants;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.nio.charset.UnsupportedCharsetException;

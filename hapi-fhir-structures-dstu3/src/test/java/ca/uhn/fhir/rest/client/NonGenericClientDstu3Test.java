@@ -17,13 +17,11 @@ import ca.uhn.fhir.system.HapiSystemProperties;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpEntityEnclosingRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -152,7 +150,7 @@ public class NonGenericClientDstu3Test {
 		MethodOutcome outcome = client.validate(patient, null, null);
 		String resp = ourCtx.newXmlParser().encodeResourceToString(outcome.getOperationOutcome());
 		assertEquals("<OperationOutcome xmlns=\"http://hl7.org/fhir\"><text><div xmlns=\"http://www.w3.org/1999/xhtml\">OK!</div></text></OperationOutcome>", resp);
-		assertEquals("http://example.com/fhir/$validate", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/$validate", capt.getAllValues().get(idx).getRequestUri().toString());
 		String request = extractBodyAsString(capt,idx);
 		assertEquals("{\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"resource\",\"resource\":{\"resourceType\":\"Patient\",\"name\":[{\"family\":\"FAM\"}]}}]}", request);
 
@@ -160,7 +158,7 @@ public class NonGenericClientDstu3Test {
 		outcome = client.validate(patient, ValidationModeEnum.CREATE, "http://foo");
 		resp = ourCtx.newXmlParser().encodeResourceToString(outcome.getOperationOutcome());
 		assertEquals("<OperationOutcome xmlns=\"http://hl7.org/fhir\"><text><div xmlns=\"http://www.w3.org/1999/xhtml\">OK!</div></text></OperationOutcome>", resp);
-		assertEquals("http://example.com/fhir/$validate", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/$validate", capt.getAllValues().get(idx).getRequestUri().toString());
 		request = extractBodyAsString(capt,idx);
 		assertEquals("{\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"resource\",\"resource\":{\"resourceType\":\"Patient\",\"name\":[{\"family\":\"FAM\"}]}},{\"name\":\"mode\",\"valueString\":\"create\"},{\"name\":\"profile\",\"valueString\":\"http://foo\"}]}", request);
 	}

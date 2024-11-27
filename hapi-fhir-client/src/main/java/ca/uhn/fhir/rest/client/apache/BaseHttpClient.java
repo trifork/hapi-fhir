@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class BaseHttpClient implements IHttpClient {
-
 	private final List<Header> myHeaders;
 	private final Map<String, List<String>> myIfNoneExistParams;
 	private final String myIfNoneExistString;

@@ -10,12 +10,10 @@ import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.ParamPrefixEnum;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Organization;
 import org.hl7.fhir.instance.model.api.IAnyResource;
@@ -88,7 +86,7 @@ public class ClientWithCustomTypeDstu3Test {
 
     HttpUriRequest request = capt.getAllValues().get(0);
 
-		assertEquals("http://example.com/fhir/Patient/123", request.getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/123", request.getRequestUri().toString());
 		assertEquals("GET", request.getMethod());
 
 		assertThat(value.getName()).hasSize(1);
@@ -130,7 +128,7 @@ public class ClientWithCustomTypeDstu3Test {
     ITestClient client = ctx.newRestfulClient(ITestClient.class, "http://foo");
     List<IBaseResource> response = client.getPatientByDobWithGenericResourceReturnType(new DateParam(ParamPrefixEnum.GREATERTHAN_OR_EQUALS, "2011-01-02"));
 
-		assertEquals("http://foo/Patient?birthdate=ge2011-01-02", capt.getValue().getURI().toString());
+		assertEquals("http://foo/Patient?birthdate=ge2011-01-02", capt.getValue().getRequestUri().toString());
     ExtendedPatient patientResp = (ExtendedPatient) response.get(0);
 		assertEquals("PRP1660", patientResp.getIdentifier().get(0).getValue());
 
@@ -168,7 +166,7 @@ public class ClientWithCustomTypeDstu3Test {
     ITestClient client = ctx.newRestfulClient(ITestClient.class, "http://foo");
     List<IAnyResource> response = client.getPatientByDobWithGenericResourceReturnType2(new DateParam(ParamPrefixEnum.GREATERTHAN_OR_EQUALS, "2011-01-02"));
 
-		assertEquals("http://foo/Patient?birthdate=ge2011-01-02", capt.getValue().getURI().toString());
+		assertEquals("http://foo/Patient?birthdate=ge2011-01-02", capt.getValue().getRequestUri().toString());
     ExtendedPatient patientResp = (ExtendedPatient) response.get(0);
 		assertEquals("PRP1660", patientResp.getIdentifier().get(0).getValue());
 

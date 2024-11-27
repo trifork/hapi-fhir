@@ -8,13 +8,11 @@ import ca.uhn.fhir.rest.client.api.IBasicClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.util.TestUtil;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
@@ -83,7 +81,7 @@ public class TransactionClientTest {
 
 		assertEquals(HttpPost.class, capt.getValue().getClass());
     HttpPost post = (HttpPost) capt.getValue();
-		assertEquals("http://foo", post.getURI().toString());
+		assertEquals("http://foo", post.getRequestUri().toString());
 
     Bundle bundle = ctx.newJsonParser().parseResource(Bundle.class, new InputStreamReader(post.getEntity().getContent()));
     ourLog.debug(ctx.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle));
@@ -122,7 +120,7 @@ public class TransactionClientTest {
 
 		assertEquals(HttpPost.class, capt.getValue().getClass());
     HttpPost post = (HttpPost) capt.getValue();
-		assertEquals("http://foo", post.getURI().toString());
+		assertEquals("http://foo", post.getRequestUri().toString());
 
     Bundle bundle = ctx.newJsonParser().parseResource(Bundle.class, new InputStreamReader(post.getEntity().getContent()));
     ourLog.debug(ctx.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle));

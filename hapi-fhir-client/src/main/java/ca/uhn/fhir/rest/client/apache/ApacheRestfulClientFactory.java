@@ -24,17 +24,19 @@ import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.Header;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.impl.RestfulClientFactory;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.ProxyAuthenticationStrategy;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.TimeValue;
 
 import java.util.List;
 import java.util.Map;
@@ -87,33 +89,38 @@ public class ApacheRestfulClientFactory extends RestfulClientFactory {
 
 	public HttpClient getNativeHttpClient() {
 		if (myHttpClient == null) {
+			ConnectionConfig connectionConfig = ConnectionConfig.custom()
+				.setConnectTimeout(getConnectTimeout(), TimeUnit.MILLISECONDS)
+				.build();
 
-			// TODO: Use of a deprecated method should be resolved.
 			RequestConfig defaultRequestConfig = RequestConfig.custom()
-					.setSocketTimeout(getSocketTimeout())
-					.setConnectTimeout(getConnectTimeout())
-					.setConnectionRequestTimeout(getConnectionRequestTimeout())
-					.setStaleConnectionCheckEnabled(true)
-					.setProxy(myProxy)
-					.build();
+				.setResponseTimeout(getSocketTimeout(), TimeUnit.MILLISECONDS)
+				.setConnectionRequestTimeout(getConnectionRequestTimeout(), TimeUnit.MILLISECONDS)
+				.build();
+
+			SocketConfig socketConfig = SocketConfig.custom()
+				.setSoTimeout(getSocketTimeout(), TimeUnit.MILLISECONDS)
+				.build();
 
 			HttpClientBuilder builder = getHttpClientBuilder()
-					.useSystemProperties()
-					.setDefaultRequestConfig(defaultRequestConfig)
-					.disableCookieManagement();
+				.useSystemProperties()
+				.setDefaultRequestConfig(defaultRequestConfig)
+				.disableCookieManagement();
 
 			PoolingHttpClientConnectionManager connectionManager =
-					new PoolingHttpClientConnectionManager(getConnectionTimeToLive(), TimeUnit.MILLISECONDS);
-			connectionManager.setMaxTotal(getPoolMaxTotal());
-			connectionManager.setDefaultMaxPerRoute(getPoolMaxPerRoute());
+				createPoolingHttpClientConnectionManager(socketConfig, connectionConfig);
 			builder.setConnectionManager(connectionManager);
 
 			if (myProxy != null && isNotBlank(getProxyUsername()) && isNotBlank(getProxyPassword())) {
-				CredentialsProvider credsProvider = new BasicCredentialsProvider();
+				BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
 				credsProvider.setCredentials(
-						new AuthScope(myProxy.getHostName(), myProxy.getPort()),
-						new UsernamePasswordCredentials(getProxyUsername(), getProxyPassword()));
-				builder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+					new AuthScope(myProxy.getHostName(), myProxy.getPort()),
+					new UsernamePasswordCredentials(
+						getProxyUsername(),
+						getProxyPassword().toCharArray()
+					)
+				);
+				builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
 				builder.setDefaultCredentialsProvider(credsProvider);
 			}
 
@@ -121,6 +128,19 @@ public class ApacheRestfulClientFactory extends RestfulClientFactory {
 		}
 
 		return myHttpClient;
+	}
+
+	private PoolingHttpClientConnectionManager createPoolingHttpClientConnectionManager(SocketConfig socketConfig, ConnectionConfig connectionConfig) {
+		PoolingHttpClientConnectionManager connectionManager =
+			new PoolingHttpClientConnectionManager();
+		connectionManager.setMaxTotal(getPoolMaxTotal());
+		connectionManager.setDefaultMaxPerRoute(getPoolMaxPerRoute());
+		connectionManager.setDefaultSocketConfig(socketConfig);
+		connectionManager.setDefaultConnectionConfig(connectionConfig);
+		connectionManager.setConnectionConfigResolver(route -> ConnectionConfig.custom()
+			.setValidateAfterInactivity(TimeValue.ofSeconds(5))  // Validate connections after 5 seconds of inactivity
+			.build());
+		return connectionManager;
 	}
 
 	protected HttpClientBuilder getHttpClientBuilder() {
@@ -133,7 +153,7 @@ public class ApacheRestfulClientFactory extends RestfulClientFactory {
 	}
 
 	/**
-	 * Only allows to set an instance of type org.apache.http.client.HttpClient
+	 * Only allows to set an instance of type org.apache.hc.client5.http.classic.HttpClient
 	 * @see ca.uhn.fhir.rest.client.api.IRestfulClientFactory#setHttpClient(Object)
 	 */
 	@Override
@@ -144,7 +164,7 @@ public class ApacheRestfulClientFactory extends RestfulClientFactory {
 	@Override
 	public void setProxy(String theHost, Integer thePort) {
 		if (theHost != null) {
-			myProxy = new HttpHost(theHost, thePort, "http");
+			myProxy = new HttpHost("http", theHost, thePort);
 		} else {
 			myProxy = null;
 		}

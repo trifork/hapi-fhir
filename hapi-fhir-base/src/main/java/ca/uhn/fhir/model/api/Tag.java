@@ -84,10 +84,10 @@ public class Tag extends BaseElement implements IElement, IBaseCoding {
 
 	public Tag(URI theScheme, URI theTerm, String theLabel) {
 		if (theScheme != null) {
-			myScheme = theScheme.toASCIIString();
+			myScheme = theScheme.toString();
 		}
 		if (theTerm != null) {
-			myTerm = theTerm.toASCIIString();
+			myTerm = theTerm.toString();
 		}
 		myLabel = theLabel;
 	}

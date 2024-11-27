@@ -34,15 +34,13 @@ import com.google.common.base.Charsets;
 import com.helger.commons.io.stream.StringInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpEntityEnclosingRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.hl7.fhir.dstu2016may.model.Binary;
 import org.hl7.fhir.dstu2016may.model.Bundle;
 import org.hl7.fhir.dstu2016may.model.Bundle.BundleType;
@@ -155,7 +153,7 @@ public class GenericClientDstu2_1Test {
 				.withId("Patient/123")
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -193,7 +191,7 @@ public class GenericClientDstu2_1Test {
 				.withId(new IdType("http://localhost/fhir/Patient/123/_history/234"))
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -231,7 +229,7 @@ public class GenericClientDstu2_1Test {
 				.conditionalByUrl("Patient?foo=bar")
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?foo=bar", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?foo=bar", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -270,7 +268,7 @@ public class GenericClientDstu2_1Test {
 				.and(Patient.FAMILY.matches().value("TEST2"))
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=TEST&family=TEST2", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name=TEST&family=TEST2", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -309,7 +307,7 @@ public class GenericClientDstu2_1Test {
 				.and(Patient.FAMILY.matches().value("TEST2"))
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=TEST&family=TEST2", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name=TEST&family=TEST2", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_JSON_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -347,7 +345,7 @@ public class GenericClientDstu2_1Test {
 				.withId("Patient/123")
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient/123", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals("PATCH", capt.getAllValues().get(0).getRequestLine().getMethod());
 		assertEquals(patch, extractBodyAsString(capt));
 		assertEquals(Constants.CT_XML_PATCH, capt.getAllValues().get(idx).getFirstHeader("Content-Type").getValue().replaceAll(";.*", ""));
@@ -396,7 +394,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Device?_format=json", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Device?_format=json", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals(Constants.CT_FHIR_JSON, capt.getAllValues().get(idx).getFirstHeader(Constants.HEADER_ACCEPT).getValue());
 		idx++;
 
@@ -406,7 +404,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Device?_format=xml", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Device?_format=xml", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		assertEquals(Constants.CT_FHIR_XML, capt.getAllValues().get(idx).getFirstHeader(Constants.HEADER_ACCEPT).getValue());
 		idx++;
 
@@ -443,7 +441,7 @@ public class GenericClientDstu2_1Test {
 
 		ourLog.info(Arrays.asList(capt.getAllValues().get(0).getAllHeaders()).toString());
 
-		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getRequestUri().toString());
 		validateUserAgent(capt);
 
 		assertEquals("application/json+fhir;charset=utf-8", capt.getAllValues().get(0).getHeaders("Content-Type")[0].getValue().toLowerCase().replace(" ", ""));
@@ -482,7 +480,7 @@ public class GenericClientDstu2_1Test {
 
 		ourLog.info(Arrays.asList(capt.getAllValues().get(0).getAllHeaders()).toString());
 
-		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getRequestUri().toString());
 		validateUserAgent(capt);
 
 		assertEquals("application/json+fhir;charset=utf-8", capt.getAllValues().get(0).getHeaders("Content-Type")[0].getValue().toLowerCase().replace(" ", ""));
@@ -593,10 +591,10 @@ public class GenericClientDstu2_1Test {
 		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">FINAL VALUE</div>", ((Patient) outcome.getResource()).getText().getDivAsString());
 
 		assertThat(capt.getAllValues()).hasSize(myAnswerCount);
-		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getRequestUri().toString());
 		assertEquals(Constants.CT_FHIR_JSON, capt.getAllValues().get(0).getFirstHeader("content-type").getValue().replaceAll(";.*", ""));
 
-		assertEquals("http://foo.com/base/Patient/222/_history/3", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://foo.com/base/Patient/222/_history/3", capt.getAllValues().get(1).getRequestUri().toString());
 	}
 
 	@Test
@@ -638,7 +636,7 @@ public class GenericClientDstu2_1Test {
 		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">FINAL VALUE</div>", ((Patient) outcome.getResource()).getText().getDivAsString());
 
 		assertThat(capt.getAllValues()).hasSize(myAnswerCount);
-		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -665,7 +663,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getEntry()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getEntry().get(0).getResource().getClass());
-		assertEquals("http://example.com/fhir/Patient/_history", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/_history", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -694,7 +692,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getEntry()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getEntry().get(0).getResource().getClass());
-		assertEquals("http://foo/next", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://foo/next", capt.getAllValues().get(0).getRequestUri().toString());
 
 		resp = client
 				.loadPage()
@@ -704,7 +702,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getEntry()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getEntry().get(0).getResource().getClass());
-		assertEquals("http://foo/next", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://foo/next", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -739,7 +737,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getParameter()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getParameter().get(0).getResource().getClass());
-		assertEquals("http://example.com/fhir/$foo", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/$foo", capt.getAllValues().get(0).getRequestUri().toString());
 
 		resp = client
 				.operation()
@@ -750,7 +748,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getParameter()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getParameter().get(0).getResource().getClass());
-		assertEquals("http://example.com/fhir/Patient/$foo", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/$foo", capt.getAllValues().get(1).getRequestUri().toString());
 	}
 
 	@Test
@@ -777,7 +775,7 @@ public class GenericClientDstu2_1Test {
 
 		assertThat(resp.getEntry()).hasSize(1);
 		assertEquals(CustomTypeDstu2_1Test.MyCustomPatient.class, resp.getEntry().get(0).getResource().getClass());
-		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -817,16 +815,16 @@ public class GenericClientDstu2_1Test {
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(2);
-		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/metadata", capt.getAllValues().get(0).getURI().toASCIIString());
-		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/Patient/1", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/metadata", capt.getAllValues().get(0).getRequestUri().toString());
+		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/Patient/1", capt.getAllValues().get(1).getRequestUri().toString());
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(3);
-		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/Patient/1", capt.getAllValues().get(2).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/Patient/1", capt.getAllValues().get(2).getRequestUri().toString());
 
 		client.forceConformanceCheck();
 		assertThat(capt.getAllValues()).hasSize(4);
-		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/metadata", capt.getAllValues().get(3).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceCapabilityStatement.com/fhir/metadata", capt.getAllValues().get(3).getRequestUri().toString());
 	}
 
 	@SuppressWarnings("deprecation")
@@ -866,17 +864,17 @@ public class GenericClientDstu2_1Test {
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(2);
-		assertEquals("http://testForceConformanceConformance.com/fhir/metadata", capt.getAllValues().get(0).getURI().toASCIIString());
-		assertEquals("http://testForceConformanceConformance.com/fhir/Patient/1", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceConformance.com/fhir/metadata", capt.getAllValues().get(0).getRequestUri().toString());
+		assertEquals("http://testForceConformanceConformance.com/fhir/Patient/1", capt.getAllValues().get(1).getRequestUri().toString());
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(3);
-		assertEquals("http://testForceConformanceConformance.com/fhir/Patient/1", capt.getAllValues().get(2).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceConformance.com/fhir/Patient/1", capt.getAllValues().get(2).getRequestUri().toString());
 
 		myAnswerCount = 0;
 		client.forceConformanceCheck();
 		assertThat(capt.getAllValues()).hasSize(4);
-		assertEquals("http://testForceConformanceConformance.com/fhir/metadata", capt.getAllValues().get(3).getURI().toASCIIString());
+		assertEquals("http://testForceConformanceConformance.com/fhir/metadata", capt.getAllValues().get(3).getRequestUri().toString());
 	}
 
 	@SuppressWarnings("deprecation")
@@ -916,17 +914,17 @@ public class GenericClientDstu2_1Test {
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(2);
-		assertEquals("http://testForceConformance.com/fhir/metadata", capt.getAllValues().get(0).getURI().toASCIIString());
-		assertEquals("http://testForceConformance.com/fhir/Patient/1", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://testForceConformance.com/fhir/metadata", capt.getAllValues().get(0).getRequestUri().toString());
+		assertEquals("http://testForceConformance.com/fhir/Patient/1", capt.getAllValues().get(1).getRequestUri().toString());
 
 		client.read().resource("Patient").withId("1").execute();
 		assertThat(capt.getAllValues()).hasSize(3);
-		assertEquals("http://testForceConformance.com/fhir/Patient/1", capt.getAllValues().get(2).getURI().toASCIIString());
+		assertEquals("http://testForceConformance.com/fhir/Patient/1", capt.getAllValues().get(2).getRequestUri().toString());
 
 		myAnswerCount = 0;
 		client.forceConformanceCheck();
 		assertThat(capt.getAllValues()).hasSize(4);
-		assertEquals("http://testForceConformance.com/fhir/metadata", capt.getAllValues().get(3).getURI().toASCIIString());
+		assertEquals("http://testForceConformance.com/fhir/metadata", capt.getAllValues().get(3).getRequestUri().toString());
 	}
 
 	@Test
@@ -996,7 +994,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client
@@ -1006,7 +1004,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Encounter", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Encounter", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client
@@ -1016,7 +1014,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Observation", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 	}
@@ -1058,7 +1056,7 @@ public class GenericClientDstu2_1Test {
 				.execute();
 
 		HttpPut httpRequest = (HttpPut) capt.getValue();
-		assertEquals("http://example.com/fhir/Bundle/BUNDLE1", httpRequest.getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Bundle/BUNDLE1", httpRequest.getRequestUri().toString());
 
 		String requestString = IOUtils.toString(httpRequest.getEntity().getContent(), StandardCharsets.UTF_8);
 		assertEquals(encoded, requestString);
@@ -1101,7 +1099,7 @@ public class GenericClientDstu2_1Test {
 				.execute();
 
 		HttpPut httpRequest = (HttpPut) capt.getValue();
-		assertEquals("http://example.com/fhir/Bundle/BUNDLE1", httpRequest.getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Bundle/BUNDLE1", httpRequest.getRequestUri().toString());
 
 		String requestString = IOUtils.toString(httpRequest.getEntity().getContent(), StandardCharsets.UTF_8);
 		assertEquals(encoded, requestString);
@@ -1213,7 +1211,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1222,7 +1220,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1231,7 +1229,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=ge" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=ge" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1240,7 +1238,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=lt" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=lt" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1249,7 +1247,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=le" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=le" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1258,7 +1256,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=" + dateString, capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?birthdate=" + dateString, capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1267,7 +1265,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=gt2011-01-02T22:33:01Z", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?birthdate=gt2011-01-02T22:33:01Z", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1276,7 +1274,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + now.getValueAsString(), UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?birthdate=gt" + now.getValueAsString(), UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1285,8 +1283,8 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertThat(capt.getAllValues().get(idx).getURI().toString()).startsWith("http://example.com/fhir/Patient?birthdate=gt2");
-		dateString = UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()).substring(44);
+		assertThat(capt.getAllValues().get(idx).getRequestUri().toString()).startsWith("http://example.com/fhir/Patient?birthdate=gt2");
+		dateString = UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()).substring(44);
 		ourLog.info(dateString);
 		assertEquals(TemporalPrecisionEnum.SECOND, new DateTimeDt(dateString).getPrecision());
 		idx++;
@@ -1317,7 +1315,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1326,7 +1324,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123||CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123||CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1335,7 +1333,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123|SYSTEM|CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=ap123|SYSTEM|CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1344,7 +1342,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1353,7 +1351,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=123||CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=123||CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1362,7 +1360,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=123|SYSTEM|CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=123|SYSTEM|CODE", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1371,7 +1369,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=gt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=gt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1380,7 +1378,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=lt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=lt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1389,7 +1387,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=ge123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=ge123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1398,7 +1396,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=le123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=le123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1407,7 +1405,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Observation?value-quantity=gt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Observation?value-quantity=gt123||", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 	}
@@ -1436,7 +1434,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=AAA", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?name=AAA", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1445,7 +1443,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=AAA", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?name=AAA", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1454,7 +1452,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1463,7 +1461,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1472,7 +1470,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name%3Aexact=AAA", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?name%3Aexact=AAA", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1481,7 +1479,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name%3Aexact=AAA", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Patient?name%3Aexact=AAA", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1490,7 +1488,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name:exact=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name:exact=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 		client.search()
@@ -1499,7 +1497,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?name:exact=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?name:exact=AAA,BBB", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 	}
@@ -1528,8 +1526,8 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Device?url=http://foo.com", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
-		assertEquals("http://example.com/fhir/Device?url=http%3A%2F%2Ffoo.com", capt.getAllValues().get(idx).getURI().toString());
+		assertEquals("http://example.com/fhir/Device?url=http://foo.com", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
+		assertEquals("http://example.com/fhir/Device?url=http%3A%2F%2Ffoo.com", capt.getAllValues().get(idx).getRequestUri().toString());
 		idx++;
 
 		client.search()
@@ -1538,7 +1536,7 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Device?url=http://foo.com", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Device?url=http://foo.com", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 	}
@@ -1558,8 +1556,8 @@ public class GenericClientDstu2_1Test {
 				.returnBundle(Bundle.class)
 				.execute();
 
-		assertEquals("http://example.com/fhir/Patient?identifier=SYS%7CVAL1%2CSYS%7CVAL2%2CSYS%7CVAL3A%5C%2CB", capt.getAllValues().get(idx).getURI().toString());
-		assertEquals("http://example.com/fhir/Patient?identifier=SYS|VAL1,SYS|VAL2,SYS|VAL3A\\,B", UrlUtil.unescape(capt.getAllValues().get(idx).getURI().toString()));
+		assertEquals("http://example.com/fhir/Patient?identifier=SYS%7CVAL1%2CSYS%7CVAL2%2CSYS%7CVAL3A%5C%2CB", capt.getAllValues().get(idx).getRequestUri().toString());
+		assertEquals("http://example.com/fhir/Patient?identifier=SYS|VAL1,SYS|VAL2,SYS|VAL3A\\,B", UrlUtil.unescape(capt.getAllValues().get(idx).getRequestUri().toString()));
 		idx++;
 
 	}
@@ -1595,7 +1593,7 @@ public class GenericClientDstu2_1Test {
 				.sort().ascending("address")
 				.returnBundle(Bundle.class)
 				.execute();
-		assertEquals("http://example.com/fhir/Patient?_sort=address", capt.getAllValues().get(idx++).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient?_sort=address", capt.getAllValues().get(idx++).getRequestUri().toString());
 
 		client
 				.search()
@@ -1603,7 +1601,7 @@ public class GenericClientDstu2_1Test {
 				.sort().descending("address")
 				.returnBundle(Bundle.class)
 				.execute();
-		assertEquals("http://example.com/fhir/Patient?_sort=-address", capt.getAllValues().get(idx++).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient?_sort=-address", capt.getAllValues().get(idx++).getRequestUri().toString());
 
 		client
 				.search()
@@ -1613,7 +1611,7 @@ public class GenericClientDstu2_1Test {
 				.sort().descending(Patient.BIRTHDATE)
 				.returnBundle(Bundle.class)
 				.execute();
-		assertEquals("http://example.com/fhir/Patient?_sort=-address%2Cname%2C-birthdate", capt.getAllValues().get(idx++).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient?_sort=-address%2Cname%2C-birthdate", capt.getAllValues().get(idx++).getRequestUri().toString());
 
 	}
 
@@ -1680,7 +1678,7 @@ public class GenericClientDstu2_1Test {
 
 		ourLog.info(Arrays.asList(capt.getAllValues().get(0).getAllHeaders()).toString());
 
-		assertEquals("http://example.com/fhir/Patient/111", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/111", capt.getAllValues().get(0).getRequestUri().toString());
 		validateUserAgent(capt);
 
 		assertEquals("application/json+fhir;charset=utf-8", capt.getAllValues().get(0).getHeaders("Content-Type")[0].getValue().toLowerCase().replace(" ", ""));
@@ -1736,8 +1734,8 @@ public class GenericClientDstu2_1Test {
 		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">FINAL VALUE</div>", ((Patient) outcome.getResource()).getText().getDivAsString());
 
 		assertThat(capt.getAllValues()).hasSize(myAnswerCount);
-		assertEquals("http://example.com/fhir/Patient/222", capt.getAllValues().get(0).getURI().toASCIIString());
-		assertEquals("http://foo.com/base/Patient/222/_history/3", capt.getAllValues().get(1).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/222", capt.getAllValues().get(0).getRequestUri().toString());
+		assertEquals("http://foo.com/base/Patient/222/_history/3", capt.getAllValues().get(1).getRequestUri().toString());
 	}
 
 	@Test
@@ -1780,7 +1778,7 @@ public class GenericClientDstu2_1Test {
 		assertEquals("<div xmlns=\"http://www.w3.org/1999/xhtml\">FINAL VALUE</div>", ((Patient) outcome.getResource()).getText().getDivAsString());
 
 		assertThat(capt.getAllValues()).hasSize(myAnswerCount);
-		assertEquals("http://example.com/fhir/Patient/222", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Patient/222", capt.getAllValues().get(0).getRequestUri().toString());
 	}
 
 	@Test
@@ -1811,7 +1809,7 @@ public class GenericClientDstu2_1Test {
 
 		ourLog.info(Arrays.asList(capt.getAllValues().get(0).getAllHeaders()).toString());
 
-		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/Binary", capt.getAllValues().get(0).getRequestUri().toString());
 		validateUserAgent(capt);
 
 		assertEquals("application/foo", capt.getAllValues().get(0).getHeaders("Content-Type")[0].getValue());
@@ -1842,7 +1840,7 @@ public class GenericClientDstu2_1Test {
 		IGenericClient client = ourCtx.newRestfulGenericClient("http://example.com/fhir");
 
 		client.fetchConformance().ofType(Conformance.class).execute();
-		assertEquals("http://example.com/fhir/metadata", capt.getAllValues().get(0).getURI().toASCIIString());
+		assertEquals("http://example.com/fhir/metadata", capt.getAllValues().get(0).getRequestUri().toString());
 		validateUserAgent(capt);
 	}
 

@@ -26,11 +26,13 @@ import ca.uhn.fhir.rest.client.impl.BaseHttpResponse;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import ca.uhn.fhir.util.StopWatch;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.ContentType;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,7 +49,7 @@ import java.util.Map;
 
 /**
  * A Http Response based on Apache. This is an adapter around the class
- * {@link org.apache.http.HttpResponse HttpResponse}
+ * {@link org.apache.hc.core5.http.ClassicHttpResponse HttpResponse}
  *
  * @author Peter Van Houte | peter.vanhoute@agfa.com | Agfa Healthcare
  */
@@ -57,9 +59,9 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 
 	private boolean myEntityBuffered = false;
 	private byte[] myEntityBytes;
-	private final HttpResponse myResponse;
+	private final ClassicHttpResponse myResponse;
 
-	public ApacheHttpResponse(HttpResponse theResponse, StopWatch theResponseStopWatch) {
+	public ApacheHttpResponse(ClassicHttpResponse theResponse, StopWatch theResponseStopWatch) {
 		super(theResponseStopWatch);
 		this.myResponse = theResponse;
 	}
@@ -85,7 +87,7 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 	public void close() {
 		if (myResponse instanceof CloseableHttpResponse) {
 			try {
-				((CloseableHttpResponse) myResponse).close();
+				myResponse.close();
 			} catch (IOException e) {
 				ourLog.debug("Failed to close response", e);
 			}
@@ -99,15 +101,14 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 			return new StringReader("");
 		}
 		Charset charset = null;
-		if (entity.getContentType() != null
-				&& entity.getContentType().getElements() != null
-				&& entity.getContentType().getElements().length > 0) {
-			ContentType ct = ContentType.get(entity);
+		String contentType = entity.getContentType();
+		if (StringUtils.isNotBlank(contentType)) {
+			ContentType ct = ContentType.parse(contentType);
 			charset = ct.getCharset();
 		}
 		if (charset == null) {
 			if (Constants.STATUS_HTTP_204_NO_CONTENT
-					!= myResponse.getStatusLine().getStatusCode()) {
+				!= myResponse.getCode()) {
 				ourLog.debug("Response did not specify a charset, defaulting to utf-8");
 			}
 			charset = StandardCharsets.UTF_8;
@@ -119,8 +120,9 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 	@Override
 	public Map<String, List<String>> getAllHeaders() {
 		Map<String, List<String>> headers = new HashMap<>();
-		if (myResponse.getAllHeaders() != null) {
-			for (Header next : myResponse.getAllHeaders()) {
+		Header[] allHeaders = myResponse.getHeaders();
+		if (allHeaders != null) {
+			for (Header next : allHeaders) {
 				String name = next.getName().toLowerCase();
 				List<String> list = headers.computeIfAbsent(name, k -> new ArrayList<>());
 				list.add(next.getValue());
@@ -144,7 +146,7 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 
 	@Override
 	public String getMimeType() {
-		ContentType ct = ContentType.get(myResponse.getEntity());
+		ContentType ct = ContentType.parse(myResponse.getEntity().getContentType());
 		return ct != null ? ct.getMimeType() : null;
 	}
 
@@ -155,12 +157,12 @@ public class ApacheHttpResponse extends BaseHttpResponse implements IHttpRespons
 
 	@Override
 	public int getStatus() {
-		return myResponse.getStatusLine().getStatusCode();
+		return myResponse.getCode();
 	}
 
 	@Override
 	public String getStatusInfo() {
-		return myResponse.getStatusLine().getReasonPhrase();
+		return myResponse.getReasonPhrase();
 	}
 
 	@Override

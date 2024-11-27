@@ -2,8 +2,8 @@ package ca.uhn.fhir.jpa.provider.dstu3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

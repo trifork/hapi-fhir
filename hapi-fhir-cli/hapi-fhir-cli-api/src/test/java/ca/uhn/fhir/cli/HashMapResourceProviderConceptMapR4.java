@@ -32,8 +32,8 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.provider.HashMapResourceProvider;
 import com.google.common.base.Charsets;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.ConceptMap;
 
 import java.net.URI;

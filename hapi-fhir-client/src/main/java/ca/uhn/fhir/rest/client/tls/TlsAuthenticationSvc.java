@@ -27,12 +27,12 @@ import ca.uhn.fhir.tls.TlsAuthentication;
 import ca.uhn.fhir.tls.TrustStoreInfo;
 import jakarta.annotation.Nonnull;
 import org.apache.commons.lang3.Validate;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.ssl.PrivateKeyStrategy;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.ssl.PrivateKeyStrategy;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 
 import java.io.FileInputStream;
 import java.io.InputStream;

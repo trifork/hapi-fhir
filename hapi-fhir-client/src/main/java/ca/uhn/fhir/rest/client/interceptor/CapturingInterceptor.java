@@ -26,8 +26,8 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpEntityContainer;
 
 import java.io.IOException;
 
@@ -74,8 +74,8 @@ public class CapturingInterceptor {
 
 	static void bufferResponse(IHttpResponse theResponse) {
 		try {
-			if (theResponse.getResponse() instanceof HttpResponse) {
-				HttpEntity entity = ((HttpResponse) theResponse.getResponse()).getEntity();
+			if (theResponse.getResponse() instanceof HttpEntityContainer) {
+				HttpEntity entity = ((HttpEntityContainer) theResponse.getResponse()).getEntity();
 				if (entity != null && !entity.isRepeatable()) {
 					theResponse.bufferEntity();
 				}

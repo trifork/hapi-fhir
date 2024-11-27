@@ -221,7 +221,7 @@ public class JaxRsRequest extends RequestDetails {
 			if ((StringUtils.isNotBlank(myVersion) || StringUtils.isNotBlank(myCompartment))
 					&& StringUtils.isBlank(myId)) {
 				throw new InvalidRequestException(Msg.code(601) + "Don't know how to handle request path: "
-						+ myServer.getUriInfo().getRequestUri().toASCIIString());
+						+ myServer.getUriInfo().getRequestUri().toString());
 			}
 
 			FhirVersionEnum fhirContextVersion =

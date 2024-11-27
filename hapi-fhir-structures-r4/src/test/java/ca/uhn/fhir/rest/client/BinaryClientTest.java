@@ -12,14 +12,12 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.util.TestUtil;
 import com.google.common.base.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ProtocolVersion;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.IdType;
 import org.junit.jupiter.api.AfterAll;
@@ -39,7 +37,7 @@ public class BinaryClientTest {
 
 	private FhirContext mtCtx;
 	private HttpClient myHttpClient;
-	private HttpResponse httpResponse;
+	private ClassicHttpResponse httpResponse;
 
 	// atom-document-large.xml
 
@@ -51,15 +49,15 @@ public class BinaryClientTest {
 		mtCtx.getRestfulClientFactory().setHttpClient(myHttpClient);
 		mtCtx.getRestfulClientFactory().setServerValidationMode(ServerValidationModeEnum.NEVER);
 
-		httpResponse = mock(HttpResponse.class, new ReturnsDeepStubs());
+		httpResponse = mock(ClassicHttpResponse.class, new ReturnsDeepStubs());
 	}
 
 	@Test
 	public void testRead() throws Exception {
 		ArgumentCaptor<HttpUriRequest> capt = ArgumentCaptor.forClass(HttpUriRequest.class);
 		when(myHttpClient.execute(capt.capture())).thenReturn(httpResponse);
-		when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
-		when(httpResponse.getEntity().getContentType()).thenReturn(new BasicHeader("content-type", "foo/bar"));
+		mockResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+		when(httpResponse.getEntity().getContentType()).thenReturn("foo/bar");
 		when(httpResponse.getEntity().getContent()).thenReturn(new ByteArrayInputStream(new byte[] { 1, 2, 3, 4 }));
 
 		IClient client = mtCtx.newRestfulClient(IClient.class, "http://foo");
@@ -67,7 +65,7 @@ public class BinaryClientTest {
 
 		assertEquals(HttpGet.class, capt.getValue().getClass());
 		HttpGet get = (HttpGet) capt.getValue();
-		assertEquals("http://foo/Binary/123", get.getURI().toString());
+		assertEquals("http://foo/Binary/123", get.getRequestUri().toString());
 
 		assertEquals("foo/bar", resp.getContentType());
 		assertThat(resp.getContent()).containsExactly(new byte[]{1, 2, 3, 4});
@@ -81,8 +79,8 @@ public class BinaryClientTest {
 
 		ArgumentCaptor<HttpUriRequest> capt = ArgumentCaptor.forClass(HttpUriRequest.class);
 		when(myHttpClient.execute(capt.capture())).thenReturn(httpResponse);
-		when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 201, "OK"));
-		when(httpResponse.getEntity().getContentType()).thenReturn(new BasicHeader("content-type", Constants.CT_FHIR_XML));
+		mockResponse(new ProtocolVersion("HTTP", 1, 1), 201, "OK");
+		when(httpResponse.getEntity().getContentType()).thenReturn(Constants.CT_FHIR_XML);
 		when(httpResponse.getEntity().getContent()).thenReturn(new ByteArrayInputStream(new byte[] {}));
 
 		IClient client = mtCtx.newRestfulClient(IClient.class, "http://foo");
@@ -90,7 +88,7 @@ public class BinaryClientTest {
 
 		assertEquals(HttpPost.class, capt.getValue().getClass());
 		HttpPost post = (HttpPost) capt.getValue();
-		assertEquals("http://foo/Binary", post.getURI().toString());
+		assertEquals("http://foo/Binary", post.getRequestUri().toString());
 
 		assertEquals("text/plain", capt.getValue().getFirstHeader("Content-Type").getValue());
 		assertThat(IOUtils.toByteArray(post.getEntity().getContent())).containsExactly(new byte[]{1, 2, 3, 4});
@@ -104,8 +102,8 @@ public class BinaryClientTest {
 
 		ArgumentCaptor<HttpUriRequest> capt = ArgumentCaptor.forClass(HttpUriRequest.class);
 		when(myHttpClient.execute(capt.capture())).thenReturn(httpResponse);
-		when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 201, "OK"));
-		when(httpResponse.getEntity().getContentType()).thenReturn(new BasicHeader("content-type", Constants.CT_FHIR_XML));
+		mockResponse(new ProtocolVersion("HTTP", 1, 1), 201, "OK");
+		when(httpResponse.getEntity().getContentType()).thenReturn(Constants.CT_FHIR_XML);
 		when(httpResponse.getEntity().getContent()).thenReturn(new ByteArrayInputStream(new byte[] {}));
 
 		IClient client = mtCtx.newRestfulClient(IClient.class, "http://foo");
@@ -113,13 +111,18 @@ public class BinaryClientTest {
 
 		assertEquals(HttpPost.class, capt.getValue().getClass());
 		HttpPost post = (HttpPost) capt.getValue();
-		assertEquals("http://foo/Binary", post.getURI().toString());
+		assertEquals("http://foo/Binary", post.getRequestUri().toString());
 
 		assertThat(capt.getValue().getFirstHeader("Content-Type").getValue()).contains(Constants.CT_FHIR_JSON_NEW);
 		assertEquals("{\"resourceType\":\"Binary\",\"contentType\":\"image/png\"}", IOUtils.toString(post.getEntity().getContent(), Charsets.UTF_8));
 
 	}
 
+	private void mockResponse(ProtocolVersion protocolVersion, int statusCode, String reasonPhrase) {
+		when(httpResponse.getVersion()).thenReturn(protocolVersion);
+		when(httpResponse.getCode()).thenReturn(statusCode);
+		when(httpResponse.getReasonPhrase()).thenReturn(reasonPhrase);
+	}
 
 	private interface IClient extends IBasicClient {
 

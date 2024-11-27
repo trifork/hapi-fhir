@@ -40,7 +40,7 @@ import ca.uhn.fhir.rest.server.util.ISearchParamRegistry;
 import ca.uhn.fhir.util.ReflectionUtil;
 import ca.uhn.fhir.util.UrlUtil;
 import com.google.common.collect.ArrayListMultimap;
-import org.apache.http.NameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
