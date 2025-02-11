@@ -6,6 +6,8 @@ import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.model.sched.ISchedulerService;
 import ca.uhn.fhir.jpa.searchparam.registry.ISearchParamProvider;
+import ca.uhn.fhir.jpa.subscription.match.registry.ActiveSubscriptionCache;
+import ca.uhn.fhir.jpa.subscription.match.registry.IActiveSubscriptionCache;
 import ca.uhn.fhir.subscription.api.IResourceModifiedMessagePersistenceSvc;
 import com.google.common.collect.Lists;
 import org.hl7.fhir.dstu3.model.Subscription;
@@ -66,6 +68,11 @@ public class TestSubscriptionDstu3Config {
 	@Bean
 	public IResourceModifiedMessagePersistenceSvc resourceModifiedMessagePersistenceSvc() {
 		return mock(IResourceModifiedMessagePersistenceSvc.class);
+	}
+
+	@Bean
+	public IActiveSubscriptionCache activeSubscriptionCache() {
+		return new ActiveSubscriptionCache();
 	}
 
 }

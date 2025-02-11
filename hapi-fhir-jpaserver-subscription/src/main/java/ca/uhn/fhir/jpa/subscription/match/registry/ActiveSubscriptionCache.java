@@ -36,27 +36,32 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 /**
  * Thread-safety: This class is thread-safe.
  */
-class ActiveSubscriptionCache {
+public class ActiveSubscriptionCache implements IActiveSubscriptionCache {
 	private static final Logger ourLog = LoggerFactory.getLogger(ActiveSubscriptionCache.class);
 
 	private final Map<String, ActiveSubscription> myCache = new HashMap<>();
 
+	@Override
 	public synchronized ActiveSubscription get(String theIdPart) {
 		return myCache.get(theIdPart);
 	}
 
+	@Override
 	public synchronized Collection<ActiveSubscription> getAll() {
 		return Collections.unmodifiableCollection(new ArrayList<>(myCache.values()));
 	}
 
+	@Override
 	public synchronized int size() {
 		return myCache.size();
 	}
 
+	@Override
 	public synchronized void put(String theSubscriptionId, ActiveSubscription theActiveSubscription) {
 		myCache.put(theSubscriptionId, theActiveSubscription);
 	}
 
+	@Override
 	public synchronized ActiveSubscription remove(String theSubscriptionId) {
 		Validate.notBlank(theSubscriptionId);
 
@@ -69,7 +74,8 @@ class ActiveSubscriptionCache {
 		return activeSubscription;
 	}
 
-	synchronized List<String> markAllSubscriptionsNotInCollectionForDeletionAndReturnIdsToDelete(
+	@Override
+	public synchronized List<String> markAllSubscriptionsNotInCollectionForDeletionAndReturnIdsToDelete(
 			Collection<String> theAllIds) {
 		List<String> retval = new ArrayList<>();
 		for (String next : myCache.keySet()) {
@@ -94,6 +100,7 @@ class ActiveSubscriptionCache {
 	 * @param theTopic
 	 * @return a list of all subscriptions that are subscribed to the given topic
 	 */
+	@Override
 	public synchronized List<ActiveSubscription> getTopicSubscriptionsForTopic(String theTopic) {
 		assert !isBlank(theTopic);
 		return getAll().stream()
@@ -102,6 +109,7 @@ class ActiveSubscriptionCache {
 				.collect(Collectors.toList());
 	}
 
+	@Override
 	public synchronized List<ActiveSubscription> getAllNonTopicSubscriptions() {
 		return getAll().stream()
 				.filter(as -> !as.getSubscription().isTopicSubscription())

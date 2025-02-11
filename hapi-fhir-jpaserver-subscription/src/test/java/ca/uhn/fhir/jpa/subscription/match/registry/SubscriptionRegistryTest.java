@@ -46,6 +46,9 @@ public class SubscriptionRegistryTest {
 	@Mock
 	IInterceptorBroadcaster myInterceptorBroadcaster;
 
+	@Spy
+	IActiveSubscriptionCache myActiveSubscriptionCache = new ActiveSubscriptionCache();
+
 	@InjectMocks
 	SubscriptionRegistry mySubscriptionRegistry;
 

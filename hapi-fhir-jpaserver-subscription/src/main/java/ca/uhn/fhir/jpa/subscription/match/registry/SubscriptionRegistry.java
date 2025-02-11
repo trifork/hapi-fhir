@@ -48,7 +48,9 @@ import java.util.Optional;
  */
 public class SubscriptionRegistry {
 	private static final Logger ourLog = LoggerFactory.getLogger(SubscriptionRegistry.class);
-	private final ActiveSubscriptionCache myActiveSubscriptionCache = new ActiveSubscriptionCache();
+
+	@Autowired
+	private IActiveSubscriptionCache myActiveSubscriptionCache;
 
 	@Autowired
 	private SubscriptionCanonicalizer mySubscriptionCanonicalizer;

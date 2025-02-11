@@ -20,12 +20,15 @@
 package ca.uhn.fhir.jpa.topic;
 
 import org.hl7.fhir.r5.model.SubscriptionTopic;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class SubscriptionTopicRegistry {
-	private final ActiveSubscriptionTopicCache myActiveSubscriptionTopicCache = new ActiveSubscriptionTopicCache();
+
+	@Autowired
+	private IActiveSubscriptionTopicCache myActiveSubscriptionTopicCache;
 
 	public SubscriptionTopicRegistry() {}
 

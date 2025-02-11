@@ -23,7 +23,7 @@ public class ActiveSubscriptionCacheTest {
 
 	@Test
 	public void twoPhaseDelete() {
-		ActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
+		IActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
 		ActiveSubscription activeSub1 = buildActiveSubscription(ID1);
 		activeSubscriptionCache.put(ID1, activeSub1);
 		assertFalse(activeSub1.isFlagForDeletion());
@@ -46,7 +46,7 @@ public class ActiveSubscriptionCacheTest {
 
 	@Test
 	public void secondPassUnflags() {
-		ActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
+		IActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
 		ActiveSubscription activeSub1 = buildActiveSubscription(ID1);
 		List<String> saveIds = new ArrayList<>();
 		activeSubscriptionCache.put(ID1, activeSub1);
@@ -66,7 +66,7 @@ public class ActiveSubscriptionCacheTest {
 
 	@Test
 	public void onlyFlaggedDeleted() {
-		ActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
+		IActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
 
 		ActiveSubscription activeSub1 = buildActiveSubscription(ID1);
 		ActiveSubscription activeSub2 = buildActiveSubscription(ID2);
@@ -85,7 +85,7 @@ public class ActiveSubscriptionCacheTest {
 
 	@Test
 	public void onListSavesAndUnmarksFlag() {
-		ActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
+		IActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
 		ActiveSubscription activeSub1 = buildActiveSubscription(ID1);
 
 		ActiveSubscription activeSub2 = buildActiveSubscription(ID2);
@@ -108,7 +108,7 @@ public class ActiveSubscriptionCacheTest {
 
 	@Test
 	public void getTopicSubscriptionsForUrl() {
-		ActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
+		IActiveSubscriptionCache activeSubscriptionCache = new ActiveSubscriptionCache();
 		ActiveSubscription activeSub1 = buildActiveSubscription(ID1);
 		activeSubscriptionCache.put(ID1, activeSub1);
 		assertThat(activeSubscriptionCache.getTopicSubscriptionsForTopic(TEST_TOPIC_URL)).hasSize(0);

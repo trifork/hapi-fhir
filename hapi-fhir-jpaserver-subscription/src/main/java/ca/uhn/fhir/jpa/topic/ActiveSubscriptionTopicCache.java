@@ -27,10 +27,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ActiveSubscriptionTopicCache {
+public class ActiveSubscriptionTopicCache implements IActiveSubscriptionTopicCache {
 	// We canonicalize on R5 SubscriptionTopic and convert back to R4B when necessary
 	private final Map<String, SubscriptionTopic> myCache = new ConcurrentHashMap<>();
 
+	@Override
 	public int size() {
 		return myCache.size();
 	}
@@ -38,6 +39,7 @@ public class ActiveSubscriptionTopicCache {
 	/**
 	 * @return true if the subscription topic was added, false if it was already present
 	 */
+	@Override
 	public boolean add(SubscriptionTopic theSubscriptionTopic) {
 		String key = theSubscriptionTopic.getIdElement().getIdPart();
 		SubscriptionTopic previousValue = myCache.put(key, theSubscriptionTopic);
@@ -47,6 +49,7 @@ public class ActiveSubscriptionTopicCache {
 	/**
 	 * @return the number of entries removed
 	 */
+	@Override
 	public int removeIdsNotInCollection(Set<String> theIdsToRetain) {
 		int retval = 0;
 		HashSet<String> safeCopy = new HashSet<>(myCache.keySet());
@@ -60,10 +63,12 @@ public class ActiveSubscriptionTopicCache {
 		return retval;
 	}
 
+	@Override
 	public Collection<SubscriptionTopic> getAll() {
 		return myCache.values();
 	}
 
+	@Override
 	public void remove(String theSubscriptionTopicId) {
 		myCache.remove(theSubscriptionTopicId);
 	}

@@ -21,7 +21,11 @@ package ca.uhn.fhir.jpa.subscription.config;
 
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.subscription.match.matcher.matching.SubscriptionStrategyEvaluator;
+import ca.uhn.fhir.jpa.subscription.match.registry.ActiveSubscriptionCache;
+import ca.uhn.fhir.jpa.subscription.match.registry.IActiveSubscriptionCache;
 import ca.uhn.fhir.jpa.subscription.submit.interceptor.validator.SubscriptionQueryValidator;
+import ca.uhn.fhir.jpa.topic.ActiveSubscriptionTopicCache;
+import ca.uhn.fhir.jpa.topic.IActiveSubscriptionTopicCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,5 +35,15 @@ public class SubscriptionConfig {
 	public SubscriptionQueryValidator subscriptionQueryValidator(
 			DaoRegistry theDaoRegistry, SubscriptionStrategyEvaluator theSubscriptionStrategyEvaluator) {
 		return new SubscriptionQueryValidator(theDaoRegistry, theSubscriptionStrategyEvaluator);
+	}
+
+	@Bean
+	public IActiveSubscriptionCache activeSubscriptionCache() {
+		return new ActiveSubscriptionCache();
+	}
+
+	@Bean
+	public IActiveSubscriptionTopicCache activeSubscriptionTopicCache() {
+		return new ActiveSubscriptionTopicCache();
 	}
 }

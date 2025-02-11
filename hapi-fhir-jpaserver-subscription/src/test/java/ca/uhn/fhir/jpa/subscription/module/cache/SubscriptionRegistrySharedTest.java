@@ -1,6 +1,8 @@
 package ca.uhn.fhir.jpa.subscription.module.cache;
 
 import ca.uhn.fhir.jpa.subscription.channel.subscription.ISubscriptionDeliveryChannelNamer;
+import ca.uhn.fhir.jpa.subscription.match.registry.ActiveSubscriptionCache;
+import ca.uhn.fhir.jpa.subscription.match.registry.IActiveSubscriptionCache;
 import ca.uhn.fhir.jpa.subscription.model.CanonicalSubscription;
 import ca.uhn.fhir.subscription.api.IResourceModifiedMessagePersistenceSvc;
 import org.hl7.fhir.dstu3.model.Subscription;
@@ -37,6 +39,11 @@ public class SubscriptionRegistrySharedTest extends BaseSubscriptionRegistryTest
 			public String nameFromSubscription(CanonicalSubscription theCanonicalSubscription) {
 				return "shared";
 			}
+		}
+
+		@Bean
+		IActiveSubscriptionCache activeSubscriptionCache() {
+			return new ActiveSubscriptionCache();
 		}
 	}
 
