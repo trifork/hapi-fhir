@@ -1,0 +1,6 @@
+---
+type: fix
+issue: 7683
+title: "A bug in BaseHapiFhirResourceDao meant that the meta.lastUpdated value of the resource in resource for Pointcut.STORAGE_PRECOMMIT_RESOURCE_DELETED contained the timestamp the resource was last modified before the delete, not the timestamp of the delete operation.
+        This has been fixed such that the meta.lastUpdated value is correctly reflecting the time of the delete operation.
+        Fix submitted by Tue Toft Nørgård (@ttnTrifork)"
