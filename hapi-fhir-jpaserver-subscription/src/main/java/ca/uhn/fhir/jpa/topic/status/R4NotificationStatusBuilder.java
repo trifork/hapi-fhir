@@ -28,6 +28,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.DateType;
+import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
@@ -68,7 +69,7 @@ public class R4NotificationStatusBuilder implements INotificationStatusBuilder<P
 		Parameters.ParametersParameterComponent notificationEvent = parameters.addParameter();
 		notificationEvent.setName("notification-event");
 		notificationEvent.addPart().setName("event-number").setValue(new StringType(eventNumber.toString()));
-		notificationEvent.addPart().setName("timestamp").setValue(new DateType(new Date()));
+		notificationEvent.addPart().setName("timestamp").setValue(InstantType.now());
 		if (!theResources.isEmpty() && !SubscriptionTopicUtil.isEmptyContentTopicSubscription(canonicalSubscription)) {
 			IBaseResource firstResource = theResources.get(0);
 			Reference resourceReference =
