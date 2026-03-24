@@ -27,7 +27,6 @@ import ca.uhn.fhir.subscription.SubscriptionConstants;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeType;
-import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Reference;
@@ -35,7 +34,6 @@ import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Subscription;
 import org.hl7.fhir.r5.model.SubscriptionStatus;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
